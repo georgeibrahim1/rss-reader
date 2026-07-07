@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSS Reader</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f5f5;
+    color: #222;
+    min-height: 100vh;
+  }
+  header {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 { font-size: 1.25rem; font-weight: 600; margin-right: auto; }
+  .add-feed { display: flex; gap: 8px; flex: 1; max-width: 400px; }
+  .add-feed input {
+    flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px;
+    font-size: 0.9rem;
+  }
+  .add-feed button {
+    padding: 8px 16px; background: #e94560; color: #fff; border: none;
+    border-radius: 6px; cursor: pointer; font-weight: 500;
+  }
+  .add-feed button:hover { background: #d63851; }
+  .feed-bar {
+    background: #fff; padding: 10px 24px; display: flex; gap: 8px;
+    flex-wrap: wrap; align-items: center; border-bottom: 1px solid #e0e0e0;
+    position: sticky; top: 60px; z-index: 9;
+  }
+  .feed-bar .label { font-size: 0.8rem; color: #666; font-weight: 500; }
+  .feed-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; background: #e8e8e8; border-radius: 20px;
+    font-size: 0.8rem; transition: background 0.15s;
+  }
+  .feed-chip .title { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .feed-chip button {
+    background: none; border: none; cursor: pointer; font-size: 0.75rem;
+    padding: 2px; line-height: 1; color: #666; border-radius: 50%;
+    width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
+  }
+  .feed-chip button:hover { background: #ccc; }
+  .feed-chip .refresh:hover { color: #1a73e8; }
+  .feed-chip .remove:hover { color: #d93025; }
+  .empty { text-align: center; padding: 60px 24px; color: #888; }
+  .empty h2 { font-size: 1.2rem; margin-bottom: 8px; }
+  .main { max-width: 720px; margin: 0 auto; padding: 16px; }
+  article {
+    background: #fff; border-radius: 8px; padding: 20px 24px;
+    margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    transition: box-shadow 0.15s;
+  }
+  article:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  article h2 { font-size: 1.1rem; margin-bottom: 6px; }
+  article h2 a { color: #1a1a2e; text-decoration: none; }
+  article h2 a:hover { text-decoration: underline; color: #1a73e8; }
+  article .meta { font-size: 0.8rem; color: #666; margin-bottom: 10px; }
+  article .meta .sep { margin: 0 6px; color: #ccc; }
+  article .desc { font-size: 0.92rem; line-height: 1.55; color: #444; }
+  article .desc :any-link { color: #1a73e8; }
+  article .desc img { max-width: 100%; height: auto; border-radius: 4px; margin: 8px 0; }
+  .spinner { text-align: center; padding: 24px; color: #888; }
+  .error { background: #fef2f2; color: #b91c1c; padding: 8px 12px; border-radius: 6px; margin: 8px 0; font-size: 0.85rem; }
+  @media (max-width: 600px) {
+    header { padding: 12px 16px; }
+    header h1 { width: 100%; margin-bottom: 4px; }
+    .add-feed { max-width: 100%; }
+    .feed-bar { padding: 8px 16px; top: 104px; }
+    .main { padding: 8px; }
+    article { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>RSS Reader</h1>
+  <div class="add-feed">
+    <input id="feedUrl" type="url" placeholder="Enter RSS/Atom feed URL..." autocomplete="url">
+    <button id="addBtn">+ Add</button>
+  </div>
+</header>
+
+<div class="feed-bar" id="feedBar"></div>
+
+<div class="main" id="main">
+  <div class="empty" id="empty">
+    <h2>No articles yet</h2>
+    <p>Add a feed above to get started.</p>
+  </div>
+  <div id="articles"></div>
+  <div class="spinner" id="spinner" style="display:none">Loading...</div>
+</div>
+
+<script>
+const API = '';
+let currentPage = 1;
+let loading = false;
+let hasMore = true;
+
+const feedUrl = document.getElementById('feedUrl');
+const addBtn = document.getElementById('addBtn');
+const feedBar = document.getElementById('feedBar');
+const articlesEl = document.getElementById('articles');
+const emptyEl = document.getElementById('empty');
+const spinner = document.getElementById('spinner');
+
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, opts);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(body.error || res.statusText);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+async function loadFeeds() {
+  const feeds = await api('/feeds');
+  feedBar.innerHTML = '<span class="label">Feeds:</span>';
+  if (feeds.length === 0) {
+    feedBar.innerHTML += '<span style="font-size:0.85rem;color:#888">No feeds added yet</span>';
+    return;
+  }
+  for (const f of feeds) {
+    const chip = document.createElement('span');
+    chip.className = 'feed-chip';
+    chip.innerHTML = `
+      <span class="title">${escapeHtml(f.title || f.url)}</span>
+      <button class="refresh" data-id="${f.id}" title="Refresh">↻</button>
+      <button class="remove" data-id="${f.id}" title="Remove">✕</button>
+    `;
+    chip.querySelector('.refresh').onclick = async (e) => {
+      e.stopPropagation();
+      const btn = e.currentTarget;
+      btn.textContent = '...';
+      try {
+        await api(`/feeds/${f.id}/refresh`, { method: 'POST' });
+        currentPage = 1; hasMore = true;
+        await loadArticles(true);
+      } catch (err) {
+        showError(err.message);
+      }
+      btn.textContent = '↻';
+    };
+    chip.querySelector('.remove').onclick = async (e) => {
+      e.stopPropagation();
+      if (!confirm(`Remove "${f.title || f.url}"?`)) return;
+      try {
+        await api(`/feeds/${f.id}`, { method: 'DELETE' });
+        currentPage = 1; hasMore = true;
+        await Promise.all([loadFeeds(), loadArticles(true)]);
+      } catch (err) {
+        showError(err.message);
+      }
+    };
+    feedBar.appendChild(chip);
+  }
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function showError(msg) {
+  const el = document.createElement('div');
+  el.className = 'error';
+  el.textContent = msg;
+  document.querySelector('.main').prepend(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function renderArticles(articles, replace) {
+  if (replace) articlesEl.innerHTML = '';
+  if (articles.length === 0 && currentPage === 1) {
+    emptyEl.style.display = '';
+    articlesEl.style.display = 'none';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  articlesEl.style.display = '';
+  for (const a of articles) {
+    const el = document.createElement('article');
+    const feed = feedBar.querySelector(`[data-id="${a.feedId}"]`);
+    const feedTitle = feed ? feed.closest('.feed-chip').querySelector('.title').textContent : '';
+    const date = a.publishedAt ? new Date(a.publishedAt).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+    el.innerHTML = `
+      <h2><a href="${escapeHtml(a.link)}" target="_blank" rel="noopener">${escapeHtml(a.title || 'Untitled')}</a></h2>
+      <div class="meta">${feedTitle ? `<span>${escapeHtml(feedTitle)}</span><span class="sep">·</span>` : ''}${a.author ? `<span>${escapeHtml(a.author)}</span><span class="sep">·</span>` : ''}<span>${date}</span></div>
+      <div class="desc">${a.description || ''}</div>
+    `;
+    articlesEl.appendChild(el);
+  }
+}
+
+async function loadArticles(replace = false) {
+  if (loading) return;
+  loading = true;
+  spinner.style.display = '';
+  try {
+    const articles = await api(`/articles?page=${currentPage}&pageSize=20`);
+    renderArticles(articles, replace);
+    if (articles.length < 20) hasMore = false;
+    else currentPage++;
+  } catch (err) {
+    showError(err.message);
+  }
+  spinner.style.display = 'none';
+  loading = false;
+}
+
+addBtn.onclick = async () => {
+  const url = feedUrl.value.trim();
+  if (!url) return;
+  addBtn.disabled = true;
+  addBtn.textContent = '...';
+  try {
+    await api(`/feeds?url=${encodeURIComponent(url)}`, { method: 'POST' });
+    feedUrl.value = '';
+    currentPage = 1; hasMore = true;
+    await Promise.all([loadFeeds(), loadArticles(true)]);
+  } catch (err) {
+    showError(err.message);
+  }
+  addBtn.disabled = false;
+  addBtn.textContent = '+ Add';
+};
+
+feedUrl.addEventListener('keydown', (e) => { if (e.key === 'Enter') addBtn.click(); });
+
+window.onscroll = () => {
+  if (!hasMore || loading) return;
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 400) {
+    loadArticles();
+  }
+};
+
+(async () => {
+  await Promise.all([loadFeeds(), loadArticles(true)]);
+})();
+</script>
+</body>
+</html>
