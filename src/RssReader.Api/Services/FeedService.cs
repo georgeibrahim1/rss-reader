@@ -30,7 +30,7 @@ public class FeedService
         return newFeed;
     }
 
-    public async Task RefreshFeedAsync(string feedId)
+    public async Task<int> RefreshFeedAsync(string feedId)
     {
         var feed = await _store.GetFeedAsync(feedId)
             ?? throw new InvalidOperationException("Feed not found");
@@ -38,7 +38,7 @@ public class FeedService
         try
         {
             var xml = await _http.GetStringAsync(feed.Url);
-            var parsed = FeedReader.ReadFromString(xml); // this part return exceptions if there are malformed content
+            var parsed = FeedReader.ReadFromString(xml);
 
             var articles = parsed.Items.Select(item => new Article
             {
@@ -49,12 +49,14 @@ public class FeedService
                 Link = item.Link ?? "",
                 Author = item.Author ?? "",
                 PublishedAt = item.PublishingDate ?? DateTime.UtcNow
-            });
+            }).ToList();
 
             await _store.AddArticlesAsync(articles);
+            return articles.Count;
         }
         catch
         {
+            return 0;
         }
     }
 }

@@ -31,14 +31,33 @@ public class StorageService
         return Task.FromResult(_store.Feeds.FirstOrDefault(f => f.Id.Equals(feedId)));
     }
 
-    public Task<List<Article>> GetArticlesAsync(int page = 1, int pageSize = 20)
+    public Task<(List<Article> Articles, int TotalCount)> GetArticlesAsync(
+        int page = 1, int pageSize = 20, string? feedIds = null,
+        string? q = null, DateTime? dateFrom = null, DateTime? dateTo = null)
     {
-        var articles = _store.Articles
+        var query = _store.Articles.AsEnumerable();
+        if (!string.IsNullOrEmpty(feedIds))
+        {
+            var ids = new HashSet<string>(feedIds.Split(',', StringSplitOptions.RemoveEmptyEntries), StringComparer.OrdinalIgnoreCase);
+            query = query.Where(a => ids.Contains(a.FeedId));
+        }
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            query = query.Where(a =>
+                (a.Title != null && a.Title.Contains(q, StringComparison.OrdinalIgnoreCase)) ||
+                (a.Content != null && a.Content.Contains(q, StringComparison.OrdinalIgnoreCase)));
+        }
+        if (dateFrom.HasValue)
+            query = query.Where(a => a.PublishedAt >= dateFrom.Value);
+        if (dateTo.HasValue)
+            query = query.Where(a => a.PublishedAt <= dateTo.Value);
+        var total = query.Count();
+        var articles = query
             .OrderByDescending(a => a.PublishedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();
-        return Task.FromResult(articles);
+        return Task.FromResult((articles, total));
     }
 
     public async Task AddArticlesAsync(IEnumerable<Article> articles)
