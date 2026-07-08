@@ -416,6 +416,45 @@
   @keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes toast-out { to { opacity: 0; transform: translateY(-8px); } }
 
+  /* ---------- modal ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    max-width: 380px; width: calc(100vw - 48px);
+    text-align: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    animation: modal-in 0.2s ease;
+  }
+  .modal-icon { font-size: 2rem; margin-bottom: 10px; }
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem; margin-bottom: 8px; color: var(--text);
+  }
+  .modal-body {
+    font-size: 0.88rem; color: var(--text-muted);
+    margin-bottom: 20px; line-height: 1.5;
+  }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-btn {
+    flex: 1; padding: 10px 0; border-radius: 10px; border: none;
+    cursor: pointer; font-size: 0.88rem; font-weight: 600;
+    font-family: var(--font-body);
+  }
+  .modal-btn.cancel { background: var(--cream-dim); color: var(--text); }
+  .modal-btn.cancel:hover { background: var(--border); }
+  .modal-btn.confirm { background: var(--coral); color: #fff; }
+  .modal-btn.confirm:hover { background: var(--coral-dark); }
+  @keyframes modal-in { from { opacity: 0; transform: scale(0.95) translateY(-8px); } }
+
   /* ---------- responsive ---------- */
   @media (max-width: 899px) {
     .app-shell { grid-template-columns: 1fr; }
@@ -516,6 +555,18 @@
   </main>
 </div>
 
+<div class="modal-overlay" id="modalOverlay" style="display:none">
+  <div class="modal">
+    <div class="modal-icon">⚠️</div>
+    <h3 class="modal-title">Remove Feed</h3>
+    <p class="modal-body" id="modalBody"></p>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="modalCancel">Cancel</button>
+      <button class="modal-btn confirm" id="modalConfirm">Remove</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-stack" id="toastStack"></div>
 
 <script>
@@ -551,6 +602,10 @@ const dateToEl = document.getElementById('dateTo');
 const applyFilterBtn = document.getElementById('applyFilter');
 const clearFilterBtn = document.getElementById('clearFilter');
 const resultsSummary = document.getElementById('resultsSummary');
+const modalOverlay = document.getElementById('modalOverlay');
+const modalBody = document.getElementById('modalBody');
+const modalCancel = document.getElementById('modalCancel');
+const modalConfirm = document.getElementById('modalConfirm');
 
 let searchQuery = '';
 let dateFromVal = '';
@@ -576,6 +631,18 @@ function showToast(msg, type = 'success') {
   }, 3800);
 }
 function showError(msg) { showToast(msg, 'error'); }
+
+function showModal(message) {
+  return new Promise((resolve) => {
+    modalBody.textContent = message;
+    modalOverlay.style.display = '';
+    const onConfirm = () => { modalOverlay.style.display = 'none'; modalCancel.removeEventListener('click', onCancel); resolve(true); };
+    const onCancel = () => { modalOverlay.style.display = 'none'; modalConfirm.removeEventListener('click', onConfirm); resolve(false); };
+    modalConfirm.addEventListener('click', onConfirm, { once: true });
+    modalCancel.addEventListener('click', onCancel, { once: true });
+    modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) onCancel(); }, { once: true });
+  });
+}
 
 function escapeHtml(s) {
   const d = document.createElement('div');
@@ -656,7 +723,8 @@ async function loadFeeds() {
 
     item.querySelector('.btn-action.delete').onclick = async (e) => {
       e.stopPropagation();
-      if (!confirm(`Remove "${f.title || f.url}"?`)) return;
+      const confirmed = await showModal(`Are you sure you want to remove "${f.title || f.url}"?`);
+      if (!confirmed) return;
       try {
         await api(`/feeds/${f.id}`, { method: 'DELETE' });
         selectedFeedIds.delete(f.id);
@@ -693,7 +761,7 @@ function renderArticles(articles) {
       desc += '.';
       emptyEl.innerHTML = `<div class="glyph">🔍</div><h2>${desc}</h2><p>Try adjusting your search or clearing the filters.</p>`;
     } else {
-      emptyEl.innerHTML = '<div class="glyph">📭</div><h2>No articles found</h2><p>Hit <strong>Refresh All</strong> to pull in the latest articles.</p>';
+      emptyEl.innerHTML = '<div class="glyph">📭</div><h2>No articles found</h2><p>Hit <strong>↻ Refresh All</strong> or the <strong>↻</strong> button beside a feed to pull in the latest.</p>';
     }
     emptyEl.style.display = '';
     return;
@@ -764,7 +832,7 @@ function goToPage(page) {
 async function loadArticles(replace = false) {
   if (loading) return;
   loading = true;
-  if (replace) { currentPage = 1; renderSkeletons(true); }
+  if (replace) { currentPage = 1; emptyEl.style.display = 'none'; renderSkeletons(true); }
 
   if (selectedFeedIds.size === 0 && !allFeedsItem.classList.contains('selected')) {
     articlesEl.innerHTML = '';

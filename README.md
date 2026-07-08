@@ -64,9 +64,7 @@ A lightweight, self-hosted RSS/Atom feed reader built with ASP.NET Core Minimal 
 ├── data/
 │   └── subscriptions.json    # Persistent data file
 ├── wwwroot/
-│   └── index.html            # Frontend (single-file SPA)
-└── .github/workflows/
-    └── ci.yml                # GitHub Actions CI
+    └── index.html            # Frontend (single-file SPA)
 ```
 
 ## Getting Started
