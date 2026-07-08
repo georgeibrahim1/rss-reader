@@ -1,257 +1,895 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RSS Reader</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📰%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --cream: #FBF6EC;
+    --cream-dim: #F3ECDD;
+    --ink: #1C2B2A;
+    --ink-soft: #3A4B49;
+    --stone: #8B8378;
+    --coral: #FF6B47;
+    --coral-dark: #E24F2C;
+    --coral-tint: #FFE4DA;
+    --teal: #0F7A6C;
+    --teal-dark: #0B5C51;
+    --teal-tint: #DCF0EA;
+    --gold: #FFC245;
+    --gold-tint: #FFF2D6;
+    --danger: #E24F2C;
+    --border: #E4DCC9;
+    --card: #FFFFFF;
+    --bg: var(--cream);
+    --surface: var(--card);
+    --text: var(--ink);
+    --text-muted: var(--stone);
+    --shadow: 0 1px 2px rgba(28,43,42,0.06), 0 6px 20px -8px rgba(28,43,42,0.12);
+    --shadow-hover: 0 2px 4px rgba(28,43,42,0.08), 0 14px 32px -10px rgba(28,43,42,0.18);
+    --radius: 16px;
+    --sidebar-width: 292px;
+    --header-height: 64px;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0F201C;
+    --surface: #163530;
+    --card: #163530;
+    --text: #EDE6D8;
+    --text-muted: #8FA39B;
+    --border: #234039;
+    --cream-dim: #1B3E38;
+    --coral-tint: #3A2620;
+    --teal-tint: #1A403C;
+    --gold-tint: #33290F;
+    --shadow: 0 1px 2px rgba(0,0,0,0.25), 0 6px 20px -8px rgba(0,0,0,0.4);
+    --shadow-hover: 0 2px 4px rgba(0,0,0,0.3), 0 14px 32px -10px rgba(0,0,0,0.55);
+  }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+  }
+  html { scroll-behavior: smooth; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f5f5f5;
-    color: #222;
-    min-height: 100vh;
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    transition: background 0.25s ease, color 0.25s ease;
   }
+  ::selection { background: var(--gold); color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; border-radius: 4px; }
+
+  .app-shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    grid-template-rows: var(--header-height) 1fr;
+    height: 100vh;
+  }
+
+  /* ---------- header ---------- */
   header {
-    background: #1a1a2e;
-    color: #fff;
-    padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
+    grid-column: 1 / -1; grid-row: 1;
+    background: var(--ink);
+    color: var(--cream);
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 20px;
+    z-index: 20;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  [data-theme="dark"] header { background: #0A1917; }
+  .brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+  .brand-mark { font-size: 1.4rem; line-height: 1; }
+  .brand h1 {
+    font-family: var(--font-display);
+    font-size: 1.25rem; font-weight: 600; letter-spacing: 0.01em;
+    color: var(--cream);
+  }
+  .icon-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: var(--cream);
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.05rem;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.18); transform: translateY(-1px); }
+  .icon-btn:active { transform: translateY(0); }
+  .menu-toggle { display: flex; }
+
+  .search-box {
+    display: flex; align-items: center; flex: 1; max-width: 300px;
+  }
+  .search-box input {
+    width: 100%; padding: 7px 12px;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 10px; color: var(--cream); font-size: 0.84rem;
+    font-family: var(--font-body); outline: none;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .search-box input::placeholder { color: rgba(255,255,255,0.45); }
+  .search-box input:focus { background: rgba(255,255,255,0.18); border-color: var(--gold); }
+
+  .filter-wrap { position: relative; }
+  .filter-dropdown {
+    display: none;
+    position: absolute; top: calc(100% + 8px); right: 0;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px; min-width: 220px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2); z-index: 50;
+    flex-direction: column; gap: 10px;
+  }
+  .filter-dropdown.show { display: flex; }
+  .filter-dropdown label {
+    font-size: 0.78rem; color: var(--text-muted);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .filter-dropdown input[type="date"] {
+    padding: 6px 8px; border: 1px solid var(--border);
+    border-radius: 6px; background: var(--bg); color: var(--text);
+    font-family: var(--font-body); font-size: 0.84rem;
+  }
+  .filter-dropdown .row { display: flex; gap: 6px; }
+  .filter-dropdown .row button {
+    flex: 1; padding: 7px 0; border-radius: 8px; border: none;
+    cursor: pointer; font-size: 0.8rem; font-weight: 500;
+    font-family: var(--font-body);
+  }
+  .filter-dropdown .apply { background: var(--teal); color: #fff; }
+  .filter-dropdown .apply:hover { background: var(--teal-dark); }
+  .filter-dropdown .clear { background: var(--cream-dim); color: var(--text); }
+  .filter-dropdown .clear:hover { background: var(--border); }
+
+  .results-summary {
+    max-width: 720px; margin: 0 auto 14px;
+    padding: 10px 20px; border-radius: 10px;
+    font-size: 0.84rem; color: var(--teal);
+    background: var(--teal-tint); display: none;
+    font-family: var(--font-mono); text-align: center;
+  }
+  @media (min-width: 900px) { .menu-toggle { display: none; } }
+
+  /* ---------- sidebar ---------- */
+  .backdrop {
+    display: none;
+    position: fixed; inset: 0; background: rgba(10,20,18,0.5);
+    z-index: 29; backdrop-filter: blur(2px);
+  }
+  .backdrop.show { display: block; }
+
+  aside {
+    grid-column: 1; grid-row: 2;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
     position: sticky;
-    top: 0;
-    z-index: 10;
+    top: var(--header-height);
+    height: calc(100vh - var(--header-height));
+    overflow-y: auto;
+    padding: 12px 16px 24px;
+    display: flex; flex-direction: column; gap: 22px;
   }
-  header h1 { font-size: 1.25rem; font-weight: 600; margin-right: auto; }
-  .add-feed { display: flex; gap: 8px; flex: 1; max-width: 400px; }
-  .add-feed input {
-    flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px;
-    font-size: 0.9rem;
+
+  .sidebar-brand {
+    display: none;
+    align-items: center; gap: 12px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
   }
-  .add-feed button {
-    padding: 8px 16px; background: #e94560; color: #fff; border: none;
-    border-radius: 6px; cursor: pointer; font-weight: 500;
+  .sidebar-brand .brand-mark { font-size: 1.8rem; }
+  .sidebar-brand h2 {
+    font-family: var(--font-display);
+    font-size: 1.3rem; font-weight: 700;
+    color: var(--text);
   }
-  .add-feed button:hover { background: #d63851; }
-  .feed-bar {
-    background: #fff; padding: 10px 24px; display: flex; gap: 8px;
-    flex-wrap: wrap; align-items: center; border-bottom: 1px solid #e0e0e0;
-    position: sticky; top: 60px; z-index: 9;
+  .sidebar-section .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 10px; font-weight: 600;
   }
-  .feed-bar .label { font-size: 0.8rem; color: #666; font-weight: 500; }
-  .feed-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 10px; background: #e8e8e8; border-radius: 20px;
-    font-size: 0.8rem; transition: background 0.15s;
+
+  .input-group { display: flex; gap: 8px; }
+  .input-group input {
+    flex: 1; min-width: 0;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.86rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
-  .feed-chip .title { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .feed-chip button {
-    background: none; border: none; cursor: pointer; font-size: 0.75rem;
-    padding: 2px; line-height: 1; color: #666; border-radius: 50%;
-    width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
+  .input-group input::placeholder { color: var(--text-muted); }
+  .input-group input:focus { border-color: var(--coral); box-shadow: 0 0 0 3px var(--coral-tint); outline: none; }
+
+  .btn-primary {
+    padding: 10px 16px;
+    background: var(--coral);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    transition: background 0.15s, transform 0.1s;
   }
-  .feed-chip button:hover { background: #ccc; }
-  .feed-chip .refresh:hover { color: #1a73e8; }
-  .feed-chip .remove:hover { color: #d93025; }
-  .empty { text-align: center; padding: 60px 24px; color: #888; }
-  .empty h2 { font-size: 1.2rem; margin-bottom: 8px; }
-  .main { max-width: 720px; margin: 0 auto; padding: 16px; }
+  .btn-primary:hover:not(:disabled) { background: var(--coral-dark); }
+  .btn-primary:active:not(:disabled) { transform: scale(0.97); }
+  .btn-primary:disabled { opacity: 0.6; cursor: default; }
+
+  .btn-action {
+    background: none; border: none; cursor: pointer;
+    padding: 3px 5px; font-size: 0.82rem; color: var(--text-muted);
+    border-radius: 6px; transition: all 0.15s;
+  }
+  .btn-action:hover { color: var(--coral); background: var(--coral-tint); }
+  .btn-action.refresh:hover { color: var(--teal); background: var(--teal-tint); }
+
+  .feeds-list { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .feeds-scroll { overflow-y: auto; flex: 1; }
+  .feed-count {
+    font-family: var(--font-mono); font-size: 0.68rem;
+    color: var(--text-muted); background: var(--cream-dim);
+    padding: 1px 7px; border-radius: 20px; margin-left: auto;
+  }
+
+  .feed-item {
+    display: flex; align-items: center; gap: 4px;
+    padding: 8px 8px; border-radius: 10px;
+    cursor: pointer; transition: background 0.12s, border-color 0.12s;
+    margin-bottom: 2px; font-size: 0.86rem;
+    border-left: 3px solid transparent;
+  }
+  .feed-item:hover { background: var(--cream-dim); }
+  .feed-item.selected {
+    border-left-color: var(--coral);
+    background: var(--coral-tint);
+    font-weight: 500;
+  }
+  .feed-item span.name {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    flex: 1; min-width: 0;
+  }
+  .feed-item .station-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-right: 6px; }
+
+  .feed-item.all-feeds {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px; margin-bottom: 8px;
+    cursor: pointer;
+    font-weight: 700; font-family: var(--font-display); font-size: 0.98rem;
+  }
+  .feed-item.all-feeds:hover { background: transparent; }
+  .feed-item.all-feeds.selected {
+    border-left-color: var(--teal);
+    background: var(--teal-tint);
+  }
+
+  .empty-feeds {
+    font-size: 0.8rem; color: var(--text-muted);
+    text-align: center; padding: 18px 8px;
+    border: 1.5px dashed var(--border); border-radius: 10px;
+  }
+
+  .btn-refresh-all {
+    width: 100%; padding: 12px;
+    background: var(--teal); color: #fff;
+    border: none; border-radius: 12px; cursor: pointer;
+    font-size: 0.9rem; font-weight: 600;
+    transition: background 0.15s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-refresh-all:hover:not(:disabled) { background: var(--teal-dark); }
+  .btn-refresh-all:active:not(:disabled) { transform: scale(0.98); }
+  .btn-refresh-all:disabled { opacity: 0.7; cursor: default; }
+  .btn-refresh-all .spin { display: inline-block; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- main ---------- */
+  main {
+    grid-column: 2; grid-row: 2;
+    overflow-y: auto; padding: 24px 24px 60px;
+  }
+  .article-list { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
   article {
-    background: #fff; border-radius: 8px; padding: 20px 24px;
-    margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    transition: box-shadow 0.15s;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    transition: box-shadow 0.2s, transform 0.2s;
+    animation: rise 0.35s ease both;
   }
-  article:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-  article h2 { font-size: 1.1rem; margin-bottom: 6px; }
-  article h2 a { color: #1a1a2e; text-decoration: none; }
-  article h2 a:hover { text-decoration: underline; color: #1a73e8; }
-  article .meta { font-size: 0.8rem; color: #666; margin-bottom: 10px; }
-  article .meta .sep { margin: 0 6px; color: #ccc; }
-  article .desc { font-size: 0.92rem; line-height: 1.55; color: #444; }
-  article .desc :any-link { color: #1a73e8; }
-  article .desc img { max-width: 100%; height: auto; border-radius: 4px; margin: 8px 0; }
-  .spinner { text-align: center; padding: 24px; color: #888; }
-  .error { background: #fef2f2; color: #b91c1c; padding: 8px 12px; border-radius: 6px; margin: 8px 0; font-size: 0.85rem; }
-  @media (max-width: 600px) {
-    header { padding: 12px 16px; }
-    header h1 { width: 100%; margin-bottom: 4px; }
-    .add-feed { max-width: 100%; }
-    .feed-bar { padding: 8px 16px; top: 104px; }
-    .main { padding: 8px; }
-    article { padding: 14px 16px; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  article:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+  article h2 { font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; margin-bottom: 8px; line-height: 1.4; }
+  article h2 a { color: var(--text); text-decoration: none; background-image: linear-gradient(var(--coral), var(--coral)); background-size: 0% 2px; background-repeat: no-repeat; background-position: 0 100%; transition: background-size 0.2s, color 0.2s; }
+  article h2 a:hover { color: var(--coral-dark); background-size: 100% 2px; }
+  article .meta {
+    font-size: 0.76rem; color: var(--text-muted);
+    margin-bottom: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 0;
+    font-family: var(--font-mono);
+  }
+  article .meta .sep { margin: 0 8px; color: var(--border); }
+  article .content {
+    font-size: 0.92rem; line-height: 1.65; color: var(--text);
+    word-break: break-word;
+  }
+  article .content a { color: var(--teal); }
+  [data-theme="dark"] article .content a { color: #5FD1BC; }
+  article .content img { max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem; font-weight: 700;
+    font-family: var(--font-mono);
+  }
+
+  /* ---------- pagination ---------- */
+  .pagination {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; padding: 24px 0 0; max-width: 720px; margin: 0 auto;
+    font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);
+  }
+  .pagination button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .pagination button:hover:not(:disabled) { background: var(--cream-dim); border-color: var(--coral); }
+  .pagination button:disabled { opacity: 0.4; cursor: default; }
+  .pagination .page-info { white-space: nowrap; }
+
+  /* ---------- empty / skeleton ---------- */
+  .empty-state {
+    text-align: center; padding: 90px 24px;
+    color: var(--text-muted);
+    max-width: 420px; margin: 0 auto;
+  }
+  .empty-state .glyph { font-size: 2.6rem; margin-bottom: 14px; }
+  .empty-state h2 { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 8px; color: var(--text); }
+  .empty-state p { font-size: 0.92rem; line-height: 1.6; }
+
+  .skeleton-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 22px 24px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .skeleton-line {
+    height: 12px; border-radius: 6px;
+    background: linear-gradient(90deg, var(--cream-dim) 25%, var(--border) 50%, var(--cream-dim) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* ---------- toasts ---------- */
+  .toast-stack {
+    position: fixed; top: calc(var(--header-height) + 12px); left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 999; max-width: min(400px, calc(100vw - 40px));
+  }
+  .toast {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--ink); color: var(--cream);
+    padding: 12px 14px; border-radius: 12px; font-size: 0.85rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    animation: toast-in 0.25s ease both;
+  }
+  [data-theme="dark"] .toast { background: #0A1917; }
+  .toast.success { border-left: 3px solid var(--teal); }
+  .toast.error { border-left: 3px solid var(--coral); }
+  .toast .icon { font-size: 1rem; line-height: 1.3; display: none; }
+  .toast .msg { flex: 1; line-height: 1.4; }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes toast-out { to { opacity: 0; transform: translateY(-8px); } }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 899px) {
+    .app-shell { grid-template-columns: 1fr; }
+    aside {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: min(320px, 86vw); height: 100%;
+      z-index: 30;
+      transform: translateX(-105%);
+      transition: transform 0.28s ease;
+      padding-top: 16px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.25);
+    }
+    aside.open { transform: translateX(0); }
+    .sidebar-brand { display: flex; }
+    main { grid-column: 1; padding: 18px 14px 50px; }
+    header { padding: 0 12px; }
+    .brand h1 { font-size: 1.08rem; }
+  }
+  @media (max-width: 480px) {
+    article { padding: 18px 16px; }
+    .toast-stack { left: 12px; right: 12px; transform: none; max-width: none; }
+    .pagination { font-size: 0.78rem; gap: 8px; }
+    .pagination button { padding: 6px 10px; font-size: 0.78rem; }
   }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>RSS Reader</h1>
-  <div class="add-feed">
-    <input id="feedUrl" type="url" placeholder="Enter RSS/Atom feed URL..." autocomplete="url">
-    <button id="addBtn">+ Add</button>
-  </div>
-</header>
+<div class="backdrop" id="backdrop"></div>
 
-<div class="feed-bar" id="feedBar"></div>
+<div class="app-shell">
+  <header>
+    <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Toggle feed list">☰</button>
+    <div class="brand">
+      <span class="brand-mark">📰</span>
+      <h1>RSS Reader</h1>
+    </div>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search articles..." autocomplete="off">
+    </div>
+    <div class="filter-wrap">
+      <button class="icon-btn" id="filterBtn" title="Date filter">📅</button>
+      <div class="filter-dropdown" id="filterDropdown">
+        <label>From <input type="date" id="dateFrom"></label>
+        <label>To <input type="date" id="dateTo"></label>
+        <div class="row">
+          <button class="apply" id="applyFilter">Apply</button>
+          <button class="clear" id="clearFilter">Clear</button>
+        </div>
+      </div>
+    </div>
+    <button class="icon-btn" id="themeToggle" title="Toggle dark/light mode">☀️</button>
+  </header>
 
-<div class="main" id="main">
-  <div class="empty" id="empty">
-    <h2>No articles yet</h2>
-    <p>Add a feed above to get started.</p>
-  </div>
-  <div id="articles"></div>
-  <div class="spinner" id="spinner" style="display:none">Loading...</div>
+  <aside id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-mark">📰</span>
+      <h2>RSS Reader</h2>
+    </div>
+    <div class="sidebar-section">
+      <h3 class="eyebrow">Add Feed</h3>
+      <div class="input-group">
+        <input id="feedUrl" type="url" placeholder="https://example.com/rss.xml" autocomplete="url">
+        <button class="btn-primary" id="addBtn">Add</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section feeds-list">
+      <h3 class="eyebrow">Feeds <span class="feed-count" id="feedCount">0</span></h3>
+      <div class="feeds-scroll" id="feedsScroll">
+        <div class="feed-item all-feeds selected" id="allFeedsItem">
+          <span>All Feeds</span>
+        </div>
+        <div id="feedsList"></div>
+        <div class="empty-feeds" id="emptyFeeds">No feeds yet — add one above</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <button class="btn-refresh-all" id="refreshAllBtn"><span id="refreshIcon">↻</span> Refresh All</button>
+    </div>
+  </aside>
+
+  <main id="main">
+    <div class="results-summary" id="resultsSummary"></div>
+    <div class="article-list" id="articles"></div>
+
+    <div class="empty-state" id="empty" style="display:none">
+      <div class="glyph">📭</div>
+      <h2>No articles found</h2>
+      <p>Add a feed and hit <strong>Refresh All</strong> to pull in the latest articles.</p>
+    </div>
+
+    <div id="skeletonWrap" style="display:none"></div>
+    <div class="pagination" id="pagination" style="display:none"></div>
+  </main>
 </div>
 
+<div class="toast-stack" id="toastStack"></div>
+
 <script>
-const API = '';
 let currentPage = 1;
+let totalCount = 0;
+let pageSize = 20;
 let loading = false;
-let hasMore = true;
+let feeds = [];
+let selectedFeedIds = new Set();
 
 const feedUrl = document.getElementById('feedUrl');
 const addBtn = document.getElementById('addBtn');
-const feedBar = document.getElementById('feedBar');
+const feedsList = document.getElementById('feedsList');
+const emptyFeeds = document.getElementById('emptyFeeds');
+const feedCount = document.getElementById('feedCount');
+const allFeedsItem = document.getElementById('allFeedsItem');
 const articlesEl = document.getElementById('articles');
 const emptyEl = document.getElementById('empty');
-const spinner = document.getElementById('spinner');
+const skeletonWrap = document.getElementById('skeletonWrap');
+const paginationEl = document.getElementById('pagination');
+const refreshAllBtn = document.getElementById('refreshAllBtn');
+const refreshIcon = document.getElementById('refreshIcon');
+const themeToggle = document.getElementById('themeToggle');
+const menuToggle = document.getElementById('menuToggle');
+const sidebar = document.getElementById('sidebar');
+const backdrop = document.getElementById('backdrop');
+const toastStack = document.getElementById('toastStack');
+const searchInput = document.getElementById('searchInput');
+const filterBtn = document.getElementById('filterBtn');
+const filterDropdown = document.getElementById('filterDropdown');
+const dateFromEl = document.getElementById('dateFrom');
+const dateToEl = document.getElementById('dateTo');
+const applyFilterBtn = document.getElementById('applyFilter');
+const clearFilterBtn = document.getElementById('clearFilter');
+const resultsSummary = document.getElementById('resultsSummary');
+
+let searchQuery = '';
+let dateFromVal = '';
+let dateToVal = '';
+let searchTimer = null;
+
+const HUES = [8, 24, 40, 160, 172, 190, 204, 340];
+function stationColor(id) {
+  let h = 0;
+  for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return `hsl(${HUES[h % HUES.length]} 72% 52%)`;
+}
+
+function showToast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="msg"></span>`;
+  el.querySelector('.msg').textContent = msg;
+  toastStack.appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'toast-out 0.25s ease forwards';
+    setTimeout(() => el.remove(), 250);
+  }, 3800);
+}
+function showError(msg) { showToast(msg, 'error'); }
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : s;
+  return d.innerHTML;
+}
+
+function getSelectedFeedIdsParam() {
+  if (selectedFeedIds.size === 0) return null;
+  return [...selectedFeedIds].join(',');
+}
 
 async function api(path, opts = {}) {
-  const res = await fetch(API + path, opts);
+  const res = await fetch(path, opts);
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(body.error || res.statusText);
   }
   if (res.status === 204) return null;
-  return res.json();
+  return await res.json();
+}
+
+/* ---------- feeds ---------- */
+function selectAllFeeds() {
+  selectedFeedIds.clear();
+  allFeedsItem.classList.add('selected');
+  feedsList.querySelectorAll('.feed-item').forEach(el => el.classList.remove('selected'));
+}
+
+function toggleFeed(feedId, el) {
+  allFeedsItem.classList.remove('selected');
+  if (selectedFeedIds.has(feedId)) {
+    selectedFeedIds.delete(feedId);
+    el.classList.remove('selected');
+  } else {
+    selectedFeedIds.add(feedId);
+    el.classList.add('selected');
+  }
+  currentPage = 1;
+  loadArticles(true);
 }
 
 async function loadFeeds() {
-  const feeds = await api('/feeds');
-  feedBar.innerHTML = '<span class="label">Feeds:</span>';
-  if (feeds.length === 0) {
-    feedBar.innerHTML += '<span style="font-size:0.85rem;color:#888">No feeds added yet</span>';
-    return;
-  }
+  feeds = await api('/feeds');
+  feedsList.innerHTML = '';
+  feedCount.textContent = feeds.length;
+  emptyFeeds.style.display = feeds.length ? 'none' : '';
+  selectedFeedIds.clear();
+  allFeedsItem.classList.add('selected');
+
   for (const f of feeds) {
-    const chip = document.createElement('span');
-    chip.className = 'feed-chip';
-    chip.innerHTML = `
-      <span class="title">${escapeHtml(f.title || f.url)}</span>
-      <button class="refresh" data-id="${f.id}" title="Refresh">↻</button>
-      <button class="remove" data-id="${f.id}" title="Remove">✕</button>
+    const item = document.createElement('div');
+    item.className = 'feed-item';
+    item.innerHTML = `
+      <span class="station-dot" style="background:${stationColor(f.id)}"></span>
+      <span class="name" title="${escapeHtml(f.url)}">${escapeHtml(f.title || f.url)}</span>
+      <button class="btn-action refresh" data-id="${f.id}" title="Refresh feed" aria-label="Refresh feed">↻</button>
+      <button class="btn-action delete" data-id="${f.id}" title="Remove feed" aria-label="Remove feed">✕</button>
     `;
-    chip.querySelector('.refresh').onclick = async (e) => {
+
+    item.onclick = (e) => {
+      if (e.target.closest('button')) return;
+      toggleFeed(f.id, item);
+    };
+
+    item.querySelector('.btn-action.refresh').onclick = async (e) => {
       e.stopPropagation();
       const btn = e.currentTarget;
-      btn.textContent = '...';
+      btn.textContent = '⏳';
       try {
         await api(`/feeds/${f.id}/refresh`, { method: 'POST' });
-        currentPage = 1; hasMore = true;
+        currentPage = 1;
         await loadArticles(true);
-      } catch (err) {
-        showError(err.message);
-      }
+      } catch (err) { showError(err.message); }
       btn.textContent = '↻';
     };
-    chip.querySelector('.remove').onclick = async (e) => {
+
+    item.querySelector('.btn-action.delete').onclick = async (e) => {
       e.stopPropagation();
       if (!confirm(`Remove "${f.title || f.url}"?`)) return;
       try {
         await api(`/feeds/${f.id}`, { method: 'DELETE' });
-        currentPage = 1; hasMore = true;
-        await Promise.all([loadFeeds(), loadArticles(true)]);
-      } catch (err) {
-        showError(err.message);
-      }
+        selectedFeedIds.delete(f.id);
+        currentPage = 1;
+        await loadFeeds();
+        await loadArticles(true);
+      } catch (err) { showError(err.message); }
     };
-    feedBar.appendChild(chip);
+
+    feedsList.appendChild(item);
   }
 }
 
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
+allFeedsItem.onclick = () => {
+  if (allFeedsItem.classList.contains('selected')) {
+    allFeedsItem.classList.remove('selected');
+    selectedFeedIds.clear();
+  } else {
+    selectAllFeeds();
+  }
+  currentPage = 1;
+  loadArticles(true);
+};
 
-function showError(msg) {
-  const el = document.createElement('div');
-  el.className = 'error';
-  el.textContent = msg;
-  document.querySelector('.main').prepend(el);
-  setTimeout(() => el.remove(), 4000);
-}
-
-function renderArticles(articles, replace) {
-  if (replace) articlesEl.innerHTML = '';
+/* ---------- articles ---------- */
+function renderArticles(articles) {
   if (articles.length === 0 && currentPage === 1) {
+    if (searchQuery || dateFromVal || dateToVal) {
+      let desc = 'No matches found';
+      if (searchQuery) desc += ` for &ldquo;<strong>${escapeHtml(searchQuery)}</strong>&rdquo;`;
+      if (dateFromVal || dateToVal) {
+        desc += ' in the selected date range';
+      }
+      desc += '.';
+      emptyEl.innerHTML = `<div class="glyph">🔍</div><h2>${desc}</h2><p>Try adjusting your search or clearing the filters.</p>`;
+    } else {
+      emptyEl.innerHTML = '<div class="glyph">📭</div><h2>No articles found</h2><p>Hit <strong>Refresh All</strong> to pull in the latest articles.</p>';
+    }
     emptyEl.style.display = '';
-    articlesEl.style.display = 'none';
     return;
   }
   emptyEl.style.display = 'none';
-  articlesEl.style.display = '';
   for (const a of articles) {
+    const feed = feeds.find(f => f.id === a.feedId);
+    const feedName = feed ? (feed.title || feed.url) : '';
+    const color = feed ? stationColor(feed.id) : 'var(--teal)';
+    const date = a.publishedAt
+      ? new Date(a.publishedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : '';
     const el = document.createElement('article');
-    const feed = feedBar.querySelector(`[data-id="${a.feedId}"]`);
-    const feedTitle = feed ? feed.closest('.feed-chip').querySelector('.title').textContent : '';
-    const date = a.publishedAt ? new Date(a.publishedAt).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
     el.innerHTML = `
-      <h2><a href="${escapeHtml(a.link)}" target="_blank" rel="noopener">${escapeHtml(a.title || 'Untitled')}</a></h2>
-      <div class="meta">${feedTitle ? `<span>${escapeHtml(feedTitle)}</span><span class="sep">·</span>` : ''}${a.author ? `<span>${escapeHtml(a.author)}</span><span class="sep">·</span>` : ''}<span>${date}</span></div>
-      <div class="desc">${a.description || ''}</div>
+      <h2><a href="${escapeHtml(a.link)}" target="_blank" rel="noopener">${escapeHtml(a.title || 'Untitled')} <span style="font-size:0.8em;opacity:0.5">↗</span></a></h2>
+      <div class="meta">
+        ${feedName ? `<span class="badge" style="background:color-mix(in srgb, ${color} 18%, transparent); color:${color}">${escapeHtml(feedName)}</span><span class="sep">·</span>` : ''}
+        ${a.author ? `<span>✍️ ${escapeHtml(a.author)}</span><span class="sep">·</span>` : ''}
+        <span>🕐 ${date}</span>
+      </div>
+      <div class="content">${a.content || ''}</div>
     `;
     articlesEl.appendChild(el);
   }
 }
 
+function renderSkeletons(show) {
+  if (!show) { skeletonWrap.style.display = 'none'; skeletonWrap.innerHTML = ''; return; }
+  skeletonWrap.style.display = 'flex';
+  skeletonWrap.style.flexDirection = 'column';
+  skeletonWrap.style.gap = '16px';
+  skeletonWrap.style.maxWidth = '720px';
+  skeletonWrap.style.margin = '0 auto';
+  let html = '';
+  for (let i = 0; i < 3; i++) {
+    html += `
+      <div class="skeleton-card">
+        <div class="skeleton-line" style="width:60%;height:16px"></div>
+        <div class="skeleton-line" style="width:35%"></div>
+        <div class="skeleton-line" style="width:100%"></div>
+        <div class="skeleton-line" style="width:92%"></div>
+        <div class="skeleton-line" style="width:76%"></div>
+      </div>`;
+  }
+  skeletonWrap.innerHTML = html;
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
+  paginationEl.style.display = totalPages <= 1 ? 'none' : '';
+  paginationEl.innerHTML = `
+    <button id="prevBtn" ${currentPage === 1 ? 'disabled' : ''}>◀ Previous</button>
+    <span class="page-info">Page ${currentPage} of ${totalPages}</span>
+    <button id="nextBtn" ${currentPage >= totalPages ? 'disabled' : ''}>Next ▶</button>
+  `;
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  if (prevBtn) prevBtn.onclick = () => { if (currentPage > 1) goToPage(currentPage - 1); };
+  if (nextBtn) nextBtn.onclick = () => { if (currentPage < totalPages) goToPage(currentPage + 1); };
+}
+
+function goToPage(page) {
+  currentPage = page;
+  loadArticles(false);
+  main.scrollTop = 0;
+}
+
 async function loadArticles(replace = false) {
   if (loading) return;
   loading = true;
-  spinner.style.display = '';
+  if (replace) { currentPage = 1; renderSkeletons(true); }
+
+  if (selectedFeedIds.size === 0 && !allFeedsItem.classList.contains('selected')) {
+    articlesEl.innerHTML = '';
+    emptyEl.innerHTML = '<div class="glyph">📭</div><h2>No feed selected</h2><p>Choose feeds from the sidebar or select <strong>All Feeds</strong> to see articles.</p>';
+    emptyEl.style.display = '';
+    paginationEl.style.display = 'none';
+    renderSkeletons(false);
+    loading = false;
+    return;
+  }
+
   try {
-    const articles = await api(`/articles?page=${currentPage}&pageSize=20`);
-    renderArticles(articles, replace);
-    if (articles.length < 20) hasMore = false;
-    else currentPage++;
+    const feedIds = getSelectedFeedIdsParam();
+    const params = new URLSearchParams({ page: currentPage, pageSize });
+    if (feedIds) params.set('feedIds', feedIds);
+    if (searchQuery) params.set('q', searchQuery);
+    if (dateFromVal) params.set('dateFrom', dateFromVal);
+    if (dateToVal) params.set('dateTo', dateToVal);
+    const data = await api(`/articles?${params}`);
+    articlesEl.innerHTML = '';
+    renderArticles(data.articles);
+    totalCount = data.totalCount;
+    renderPagination();
+
+    if (searchQuery || dateFromVal || dateToVal) {
+      let parts = [];
+      if (searchQuery) parts.push(`"${searchQuery}"`);
+      if (dateFromVal || dateToVal) {
+        let range = '';
+        if (dateFromVal && dateToVal) range = `${dateFromVal} – ${dateToVal}`;
+        else if (dateFromVal) range = `since ${dateFromVal}`;
+        else range = `until ${dateToVal}`;
+        parts.push(range);
+      }
+      resultsSummary.textContent = `Found ${totalCount} results for ${parts.join(' · ')}`;
+      resultsSummary.style.display = 'block';
+    } else {
+      resultsSummary.style.display = 'none';
+    }
   } catch (err) {
     showError(err.message);
   }
-  spinner.style.display = 'none';
+  renderSkeletons(false);
   loading = false;
 }
 
+/* ---------- search & filter ---------- */
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    searchQuery = searchInput.value.trim();
+    currentPage = 1;
+    loadArticles(true);
+  }, 300);
+});
+
+filterBtn.onclick = (e) => {
+  e.stopPropagation();
+  filterDropdown.classList.toggle('show');
+};
+
+applyFilterBtn.onclick = () => {
+  dateFromVal = dateFromEl.value;
+  dateToVal = dateToEl.value;
+  filterDropdown.classList.remove('show');
+  currentPage = 1;
+  loadArticles(true);
+};
+
+clearFilterBtn.onclick = () => {
+  dateFromEl.value = '';
+  dateToEl.value = '';
+  dateFromVal = '';
+  dateToVal = '';
+  filterDropdown.classList.remove('show');
+  currentPage = 1;
+  loadArticles(true);
+};
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.filter-wrap')) filterDropdown.classList.remove('show');
+});
+
+/* ---------- add feed ---------- */
 addBtn.onclick = async () => {
   const url = feedUrl.value.trim();
-  if (!url) return;
-  addBtn.disabled = true;
-  addBtn.textContent = '...';
+  if (!url) { feedUrl.focus(); return; }
+  addBtn.disabled = true; addBtn.textContent = 'Adding…';
   try {
     await api(`/feeds?url=${encodeURIComponent(url)}`, { method: 'POST' });
     feedUrl.value = '';
-    currentPage = 1; hasMore = true;
-    await Promise.all([loadFeeds(), loadArticles(true)]);
-  } catch (err) {
-    showError(err.message);
-  }
-  addBtn.disabled = false;
-  addBtn.textContent = '+ Add';
+    await loadFeeds();
+    await loadArticles(true);
+  } catch (err) { showError(err.message); }
+  addBtn.disabled = false; addBtn.textContent = 'Add';
 };
-
 feedUrl.addEventListener('keydown', (e) => { if (e.key === 'Enter') addBtn.click(); });
 
-window.onscroll = () => {
-  if (!hasMore || loading) return;
-  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 400) {
-    loadArticles();
-  }
+/* ---------- refresh all ---------- */
+refreshAllBtn.onclick = async () => {
+  refreshAllBtn.disabled = true;
+  refreshIcon.classList.add('spin');
+  refreshAllBtn.lastChild.textContent = ' Refreshing…';
+  try {
+    const res = await api('/feeds/refresh-all', { method: 'POST' });
+    showToast(res?.message || 'Feeds refreshed');
+    await loadArticles(true);
+  } catch (err) { showError(err.message); }
+  refreshAllBtn.disabled = false;
+  refreshIcon.classList.remove('spin');
+  refreshAllBtn.lastChild.textContent = ' Refresh All';
 };
 
+/* ---------- theme ---------- */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('theme', theme);
+}
+themeToggle.onclick = () => {
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+};
+applyTheme(localStorage.getItem('theme') || 'light');
+
+/* ---------- mobile drawer ---------- */
+function openSidebar() { sidebar.classList.add('open'); backdrop.classList.add('show'); }
+function closeSidebar() { sidebar.classList.remove('open'); backdrop.classList.remove('show'); }
+menuToggle.onclick = () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+backdrop.onclick = closeSidebar;
+
+/* ---------- boot ---------- */
 (async () => {
-  await Promise.all([loadFeeds(), loadArticles(true)]);
+  renderSkeletons(true);
+  await loadFeeds();
+  await loadArticles(true);
 })();
 </script>
 </body>
