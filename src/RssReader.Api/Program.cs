@@ -4,6 +4,7 @@ using RssReader.Api.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<StorageService>();
+builder.Services.AddSingleton(sp => new HttpClient());
 builder.Services.AddSingleton<FeedService>();
 
 var app = builder.Build();
@@ -40,8 +41,8 @@ app.MapPost("/feeds/{id}/refresh", async (string id, FeedService feedService) =>
 {
     try
     {
-        await feedService.RefreshFeedAsync(id);
-        return Results.Ok(new { message = "Feed refreshed" });
+        var count = await feedService.RefreshFeedAsync(id);
+        return Results.Ok(new { message = "Feed refreshed", articleCount = count });
     }
     catch (Exception ex)
     {
@@ -49,12 +50,23 @@ app.MapPost("/feeds/{id}/refresh", async (string id, FeedService feedService) =>
     }
 });
 
-app.MapGet("/articles", async (int? page, int? pageSize, StorageService store) =>
+app.MapPost("/feeds/refresh-all", async (StorageService store, FeedService feedService) =>
+{
+    var feeds = await store.GetFeedsAsync();
+    var total = 0;
+    foreach (var f in feeds)
+    {
+        try { total += await feedService.RefreshFeedAsync(f.Id); } catch { }
+    }
+    return Results.Ok(new { message = $"Refreshed {feeds.Count} feeds", articleCount = total });
+});
+
+app.MapGet("/articles", async (int? page, int? pageSize, string? feedIds, string? q, DateTime? dateFrom, DateTime? dateTo, StorageService store) =>
 {
     var p = page ?? 1;
     var ps = pageSize ?? 20;
-    var articles = await store.GetArticlesAsync(p, ps);
-    return Results.Ok(articles);
+    var (articles, totalCount) = await store.GetArticlesAsync(p, ps, feedIds, q, dateFrom, dateTo);
+    return Results.Ok(new { articles, totalCount });
 });
 
 app.Run();
