@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using RssReader.Api.Data;
 using RssReader.Api.Models;
@@ -38,6 +39,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddAuthorization();
+builder.Services.Configure<ForwardedHeadersOptions>(opts =>
+{
+    opts.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+});
 builder.Services.AddSingleton(sp => new HttpClient());
 builder.Services.AddSingleton<FeedService>();
 builder.Services.AddSingleton<DigestWorker>();
@@ -65,6 +70,7 @@ await DbSeeder.SeedAsync(app.Services);
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.UseForwardedHeaders();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -80,27 +86,30 @@ app.Use(async (ctx, next) =>
 
 // --------------- Auth ---------------
 
-app.MapPost("/auth/register", async (string email, string password, UserManager<User> userManager) =>
+app.MapPost("/auth/register", async (AuthRequest req, UserManager<User> userManager) =>
 {
-    if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+    if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
         return Results.BadRequest(new { error = "Email and password are required." });
 
-    var user = new User { UserName = email, Email = email };
-    var result = await userManager.CreateAsync(user, password);
-    if (!result.Succeeded)
-        return Results.BadRequest(new { error = result.Errors.First().Description });
+    if (!req.Email.Contains('@') || !req.Email.Contains('.') || req.Email.EndsWith('.'))
+        return Results.BadRequest(new { error = "Please enter a valid email address." });
 
-    await userManager.AddClaimAsync(user, new Claim(ClaimTypes.Email, email));
+    var user = new User { UserName = req.Email, Email = req.Email };
+    var result = await userManager.CreateAsync(user, req.Password);
+    if (!result.Succeeded)
+        return Results.BadRequest(new { errors = result.Errors.Select(e => e.Description), error = result.Errors.First().Description });
+
+    await userManager.AddClaimAsync(user, new Claim(ClaimTypes.Email, req.Email));
     return Results.Created("/auth/me", new { email = user.Email });
 });
 
-app.MapPost("/auth/login", async (string email, string password, UserManager<User> userManager, SignInManager<User> signIn) =>
+app.MapPost("/auth/login", async (AuthRequest req, UserManager<User> userManager, SignInManager<User> signIn) =>
 {
-    var user = await userManager.FindByEmailAsync(email);
+    var user = await userManager.FindByEmailAsync(req.Email);
     if (user == null)
         return Results.BadRequest(new { error = "Invalid email or password." });
 
-    var result = await signIn.CheckPasswordSignInAsync(user, password, false);
+    var result = await signIn.CheckPasswordSignInAsync(user, req.Password, false);
     if (!result.Succeeded)
         return Results.BadRequest(new { error = "Invalid email or password." });
 
@@ -466,3 +475,4 @@ app.Run();
 
 internal record UpdateFeedRequest(string? Title, string? Url, string? Color);
 internal record UpdateUserRequest(int? DigestFrequencyHours);
+internal record AuthRequest(string Email, string Password);

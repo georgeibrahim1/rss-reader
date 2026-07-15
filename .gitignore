@@ -6,6 +6,12 @@
 # dotenv files
 .env
 
+# Database files (local only — do not commit)
+data/
+*.db
+*.db-shm
+*.db-wal
+
 # User-specific files
 *.rsuser
 *.suo

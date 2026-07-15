@@ -18,8 +18,12 @@ export class LoginComponent {
   error = '';
   loading = false;
 
+  clearError(): void { this.error = ''; }
+
   async submit(): Promise<void> {
     this.error = '';
+    if (!this.email.trim() || !this.password) { this.error = 'Email and password are required.'; return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email.trim())) { this.error = 'Please enter a valid email address.'; return; }
     this.loading = true;
     try {
       await this.auth.login(this.email, this.password);
