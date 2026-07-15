@@ -17,18 +17,29 @@ export class RegisterComponent {
   password = '';
   confirm = '';
   error = '';
+  backendErrors: string[] = [];
   loading = false;
+
+  clearError(): void { this.error = ''; this.backendErrors = []; }
 
   async submit(): Promise<void> {
     this.error = '';
+    this.backendErrors = [];
+    if (!this.email.trim() || !this.password) { this.error = 'Email and password are required.'; return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email.trim())) { this.error = 'Please enter a valid email address.'; return; }
     if (this.password !== this.confirm) { this.error = 'Passwords do not match.'; return; }
     this.loading = true;
     try {
       await this.auth.register(this.email, this.password);
+      await this.auth.login(this.email, this.password);
       await this.router.navigate(['/']);
     } catch (err: any) {
       const body = err?.error;
-      this.error = body?.error || 'Registration failed. Please try again.';
+      if (body?.errors?.length) {
+        this.backendErrors = body.errors;
+      } else {
+        this.error = body?.error || 'Registration failed.';
+      }
     }
     this.loading = false;
   }

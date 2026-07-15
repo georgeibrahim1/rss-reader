@@ -542,6 +542,15 @@ article .content.collapsed::after {
 .auth-switch { font-size: 0.84rem; color: var(--text-muted); margin-top: 16px; }
 .auth-switch a { color: var(--teal); text-decoration: none; font-weight: 500; }
 
+/* password checklist */
+.pw-checks {
+  display: flex; flex-wrap: wrap; gap: 6px 14px;
+  margin-bottom: 8px; font-size: 0.78rem; color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.pw-checks span { transition: color 0.15s; }
+.pw-checks span.ok { color: var(--teal); }
+
 /* ---------- sidebar tabs ---------- */
 .sidebar-tabs {
   display: flex; gap: 0;

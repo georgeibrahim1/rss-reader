@@ -18,15 +18,14 @@ export class AuthService {
   }
 
   async login(email: string, password: string): Promise<void> {
-    const params = new URLSearchParams({ email, password });
-    const res = await firstValueFrom(this.http.post<{ email: string }>(`/auth/login?${params}`, null));
+    const res = await firstValueFrom(
+      this.http.post<{ email: string }>('/auth/login', { email, password })
+    );
     this.user.set(res);
   }
 
   async register(email: string, password: string): Promise<void> {
-    const params = new URLSearchParams({ email, password });
-    await firstValueFrom(this.http.post(`/auth/register?${params}`, null));
-    await this.login(email, password);
+    await firstValueFrom(this.http.post('/auth/register', { email, password }));
   }
 
   async logout(): Promise<void> {
