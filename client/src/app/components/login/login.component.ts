@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { extractErrorMessage } from '../../services/auth-error';
 
 @Component({
   selector: 'app-login',
@@ -29,8 +30,7 @@ export class LoginComponent {
       await this.auth.login(this.email, this.password);
       await this.router.navigate(['/']);
     } catch (err: any) {
-      const body = err?.error;
-      this.error = body?.error || 'Login failed. Please try again.';
+      this.error = extractErrorMessage(err);
     }
     this.loading = false;
   }

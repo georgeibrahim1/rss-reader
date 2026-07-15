@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { extractErrorMessage } from '../../services/auth-error';
 
 @Component({
   selector: 'app-register',
@@ -35,10 +36,10 @@ export class RegisterComponent {
       await this.router.navigate(['/']);
     } catch (err: any) {
       const body = err?.error;
-      if (body?.errors?.length) {
+      if (body?.errors && Array.isArray(body.errors) && body.errors.length) {
         this.backendErrors = body.errors;
       } else {
-        this.error = body?.error || 'Registration failed.';
+        this.error = extractErrorMessage(err);
       }
     }
     this.loading = false;
