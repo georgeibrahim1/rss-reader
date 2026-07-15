@@ -34,6 +34,11 @@ export class FeedService {
     return firstValueFrom(this.http.post<{ articleCount: number }>('/feeds/refresh-all', null));
   }
 
+  async updateFeed(id: string, title: string, url?: string, color?: string | null): Promise<void> {
+    await firstValueFrom(this.http.patch(`/feeds/${id}`, { title, url, color }));
+    await this.loadFeeds();
+  }
+
   toggleAllMode(): void {
     if (this.allMode()) {
       this.allMode.set(false);
@@ -55,5 +60,17 @@ export class FeedService {
     if (this.allMode()) return null;
     if (this.selectedIds().size === 0) return null;
     return [...this.selectedIds()].join(',');
+  }
+
+  async starFeed(id: string): Promise<{ starred: boolean }> {
+    const res = await firstValueFrom(this.http.post<{ starred: boolean }>(`/feeds/${id}/star`, null));
+    await this.loadFeeds();
+    return res;
+  }
+
+  async toggleEmailNotifications(id: string): Promise<{ emailNotifications: boolean }> {
+    const res = await firstValueFrom(this.http.post<{ emailNotifications: boolean }>(`/feeds/${id}/email-notifications`, null));
+    await this.loadFeeds();
+    return res;
   }
 }
