@@ -31,10 +31,10 @@
 
         @for (f of feedService.feeds(); track f.id) {
           <div class="feed-item" [class.selected]="isFeedSelected(f)"
-               (click)="feedService.toggleFeed(f.id); articleService.loadArticles(true, feedService.getSelectedIdsParam())">
+               (click)="selectFeed(f)">
             <span class="station-dot" [style.background]="stationColor(f.id, f.color)"></span>
             <span class="name" [title]="f.url">{{ f.title || f.url }}</span>
-            <button class="btn-action refresh" (click)="refreshFeed(f, refreshBtn); $event.stopPropagation()" #refreshBtn title="Refresh feed">↻</button>
+            <button class="btn-action refresh" (click)="refreshFeed(f); $event.stopPropagation()" title="Refresh feed">{{ refreshingFeedIds().has(f.id) ? '⏳' : '↻' }}</button>
             <button class="btn-action star" [class.starred]="f.starred"
                     (click)="onStarFeed(f); $event.stopPropagation()" title="Star feed">{{ f.starred ? '⭐' : '☆' }}</button>
             <button class="btn-action settings" (click)="openFeedSettings(f); $event.stopPropagation()" title="Feed settings">⚙️</button>
@@ -65,7 +65,7 @@
             <span class="playlist-icon">{{ p.emoji || '📁' }}</span>
             <span class="name">{{ p.name }}</span>
             <span class="feed-count-inline">{{ p.feedCount }}</span>
-            <button class="btn-action refresh" (click)="refreshPlaylist(p.id); $event.stopPropagation()" title="Refresh playlist">↻</button>
+            <button class="btn-action refresh" (click)="refreshPlaylist(p.id); $event.stopPropagation()" title="Refresh playlist">{{ refreshingPlaylistIds().has(p.id) ? '⏳' : '↻' }}</button>
             <button class="btn-action star" (click)="onStarPlaylist(p); $event.stopPropagation()" title="Star playlist">{{ playlistStarred().get(p.id) ? '⭐' : '☆' }}</button>
             <button class="btn-action settings" (click)="openPlaylistSettings(p); $event.stopPropagation()" title="Playlist settings">⚙️</button>
           </div>

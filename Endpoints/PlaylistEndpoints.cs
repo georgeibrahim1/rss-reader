@@ -102,11 +102,19 @@ public static class PlaylistEndpoints
                 try
                 {
                     var articles = await feedService.FetchArticlesAsync(f.Url);
+                    if (articles.Count == 0) continue;
+
+                    var links = articles.Select(a => a.Link).ToList();
+                    var existingLinks = new HashSet<string>(
+                        await db.Articles.Where(a => links.Contains(a.Link)).Select(a => a.Link).ToListAsync(),
+                        StringComparer.OrdinalIgnoreCase);
+
                     foreach (var a in articles)
                     {
+                        if (existingLinks.Contains(a.Link)) continue;
                         a.FeedId = fid;
-                        if (!await db.Articles.AnyAsync(x => x.Link == a.Link))
-                        { db.Articles.Add(a); total++; }
+                        db.Articles.Add(a);
+                        total++;
                     }
                 }
                 catch (Exception ex) { failed.Add(new { f!.Id, f.Title, error = ex.Message }); }

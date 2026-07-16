@@ -699,3 +699,21 @@ article .content.collapsed::after {
   .pagination { font-size: 0.78rem; gap: 8px; flex-wrap: wrap; justify-content: center; padding-bottom: 24px; }
   .pagination button { padding: 6px 10px; font-size: 0.78rem; }
 }
+
+/* ---------- refresh progress bar ---------- */
+@keyframes refresh-slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+.refresh-bar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 10;
+  background: linear-gradient(90deg, transparent, var(--coral), var(--gold), var(--teal), transparent);
+  animation: refresh-slide 1.8s ease-in-out infinite;
+  border-radius: 1px;
+  margin-bottom: -2px; /* overlap with article list without pushing content */
+}

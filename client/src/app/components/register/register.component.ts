@@ -18,16 +18,16 @@ export class RegisterComponent {
   password = '';
   confirm = '';
   error = signal('');
-  backendErrors: string[] = [];
-  loading = false;
+  backendErrors = signal<string[]>([]);
+  loading = signal(false);
 
   async submit(): Promise<void> {
     this.error.set('');
-    this.backendErrors = [];
+    this.backendErrors.set([]);
     if (!this.email.trim() || !this.password) { this.error.set('Email and password are required.'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email.trim())) { this.error.set('Please enter a valid email address.'); return; }
     if (this.password !== this.confirm) { this.error.set('Passwords do not match.'); return; }
-    this.loading = true;
+    this.loading.set(true);
     try {
       await this.auth.register(this.email, this.password);
       await this.auth.login(this.email, this.password);
@@ -35,11 +35,11 @@ export class RegisterComponent {
     } catch (err: any) {
       const body = err?.error;
       if (body?.errors && Array.isArray(body.errors) && body.errors.length) {
-        this.backendErrors = body.errors;
+        this.backendErrors.set(body.errors);
       } else {
         this.error.set(extractErrorMessage(err));
       }
     }
-    this.loading = false;
+    this.loading.set(false);
   }
 }

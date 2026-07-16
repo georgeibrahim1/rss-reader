@@ -54,16 +54,21 @@ public static class FeedEndpoints
             try
             {
                 var articles = await feedService.FetchArticlesAsync(feed.Url);
+                if (articles.Count == 0)
+                    return Results.Ok(new { message = "Feed refreshed", articleCount = 0 });
+
+                var links = articles.Select(a => a.Link).ToList();
+                var existingLinks = new HashSet<string>(
+                    await db.Articles.Where(a => links.Contains(a.Link)).Select(a => a.Link).ToListAsync(),
+                    StringComparer.OrdinalIgnoreCase);
+
                 var count = 0;
                 foreach (var article in articles)
                 {
+                    if (existingLinks.Contains(article.Link)) continue;
                     article.FeedId = id;
-                    var exists = await db.Articles.AnyAsync(a => a.Link == article.Link);
-                    if (!exists)
-                    {
-                        db.Articles.Add(article);
-                        count++;
-                    }
+                    db.Articles.Add(article);
+                    count++;
                 }
                 await db.SaveChangesAsync();
                 return Results.Ok(new { message = "Feed refreshed", articleCount = count });
@@ -80,16 +85,26 @@ public static class FeedEndpoints
             var feeds = await db.Feeds.Where(f => f.UserId == userId).ToListAsync();
             var total = 0;
             var failed = new List<object>();
+
+            // Collect all articles from all feeds, then dedup in one batch per feed
             foreach (var f in feeds)
             {
                 try
                 {
                     var articles = await feedService.FetchArticlesAsync(f.Url);
+                    if (articles.Count == 0) continue;
+
+                    var links = articles.Select(a => a.Link).ToList();
+                    var existingLinks = new HashSet<string>(
+                        await db.Articles.Where(a => links.Contains(a.Link)).Select(a => a.Link).ToListAsync(),
+                        StringComparer.OrdinalIgnoreCase);
+
                     foreach (var article in articles)
                     {
+                        if (existingLinks.Contains(article.Link)) continue;
                         article.FeedId = f.Id;
-                        var exists = await db.Articles.AnyAsync(a => a.Link == article.Link);
-                        if (!exists) { db.Articles.Add(article); total++; }
+                        db.Articles.Add(article);
+                        total++;
                     }
                 }
                 catch (Exception ex) { failed.Add(new { f.Id, f.Title, error = ex.Message }); }

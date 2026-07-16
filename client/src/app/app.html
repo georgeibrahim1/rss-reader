@@ -25,6 +25,9 @@
       @if (showEmpty) {
         <div class="empty-state" [innerHTML]="emptyStateHtml"></div>
       }
+      @if (articleService.refreshing()) {
+        <div class="refresh-bar"></div>
+      }
       <div class="article-list">
         @for (a of articleService.articles(); track a.id) {
           <app-article-card [article]="a" [feeds]="feedService.feeds()" [stationColorFn]="stationColor.bind(this)" />

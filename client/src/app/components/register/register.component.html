@@ -6,10 +6,10 @@
     </div>
     <h2>Create Account</h2>
     @if (error()) { <div class="auth-error">{{ error() }}</div> }
-    @if (backendErrors.length) {
+    @if (backendErrors().length) {
       <div class="auth-error">
         <ul style="margin:0;padding-left:18px">
-          @for (e of backendErrors; track e) { <li>{{ e }}</li> }
+          @for (e of backendErrors(); track e) { <li>{{ e }}</li> }
         </ul>
       </div>
     }
@@ -17,8 +17,8 @@
       <input type="email" [(ngModel)]="email" name="email" placeholder="Email" required autocomplete="email">
       <input type="password" [(ngModel)]="password" name="password" placeholder="Password" required autocomplete="new-password">
       <input type="password" [(ngModel)]="confirm" name="confirm" placeholder="Confirm password" required autocomplete="new-password">
-      <button class="auth-btn" type="submit" [disabled]="loading">
-        {{ loading ? 'Creating account...' : 'Create Account' }}
+      <button class="auth-btn" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Creating account...' : 'Create Account' }}
       </button>
     </form>
     <p class="auth-switch">Already have an account? <a routerLink="/login">Sign In</a></p>

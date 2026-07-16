@@ -30,8 +30,8 @@ export class FeedService {
     return firstValueFrom(this.http.post<{ articleCount: number }>(`/feeds/${id}/refresh`, null));
   }
 
-  async refreshAll(): Promise<{ articleCount: number }> {
-    return firstValueFrom(this.http.post<{ articleCount: number }>('/feeds/refresh-all', null));
+  async refreshAll(): Promise<{ articleCount: number; failed?: { id: string; title: string; error: string }[] }> {
+    return firstValueFrom(this.http.post<{ articleCount: number; failed?: { id: string; title: string; error: string }[] }>('/feeds/refresh-all', null));
   }
 
   async updateFeed(id: string, title: string, url?: string, color?: string | null): Promise<void> {
@@ -62,15 +62,28 @@ export class FeedService {
     return [...this.selectedIds()].join(',');
   }
 
+  // ── Optimistic toggles: update UI instantly, sync in background ──
   async starFeed(id: string): Promise<{ starred: boolean }> {
-    const res = await firstValueFrom(this.http.post<{ starred: boolean }>(`/feeds/${id}/star`, null));
-    await this.loadFeeds();
-    return res;
+    const prev = this.feeds();
+    this.feeds.update(list => list.map(f => f.id === id ? { ...f, starred: !f.starred } : f));
+    try {
+      const res = await firstValueFrom(this.http.post<{ starred: boolean }>(`/feeds/${id}/star`, null));
+      return res;
+    } catch {
+      this.feeds.set(prev); // rollback
+      throw new Error('Failed to update star');
+    }
   }
 
   async toggleEmailNotifications(id: string): Promise<{ emailNotifications: boolean }> {
-    const res = await firstValueFrom(this.http.post<{ emailNotifications: boolean }>(`/feeds/${id}/email-notifications`, null));
-    await this.loadFeeds();
-    return res;
+    const prev = this.feeds();
+    this.feeds.update(list => list.map(f => f.id === id ? { ...f, emailNotifications: !f.emailNotifications } : f));
+    try {
+      const res = await firstValueFrom(this.http.post<{ emailNotifications: boolean }>(`/feeds/${id}/email-notifications`, null));
+      return res;
+    } catch {
+      this.feeds.set(prev); // rollback
+      throw new Error('Failed to update email notifications');
+    }
   }
 }

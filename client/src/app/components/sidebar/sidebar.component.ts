@@ -43,6 +43,8 @@ export class SidebarComponent implements OnInit {
   addFeedDropdownOpen = signal(false);
   playlistFeeds = signal<Feed[]>([]);
   availableFeeds = signal<Feed[]>([]);
+  refreshingFeedIds = signal<Set<string>>(new Set());
+  refreshingPlaylistIds = signal<Set<string>>(new Set());
 
   readonly FEED_COLORS = ['#FF6B47', '#F3722C', '#F9C74F', '#90BE6D', '#0F7A6C', '#277DA1', '#577590', '#F94144'];
   readonly PLAYLIST_EMOJIS = ['📁', '📰', '🎯', '💡', '🔥', '⭐', '🏷️'];
@@ -66,6 +68,11 @@ export class SidebarComponent implements OnInit {
     this.feedService.allMode.set(true);
     this.feedService.selectedIds.set(new Set());
     this.articleService.loadArticles(true, null);
+  }
+
+  async selectFeed(f: Feed): Promise<void> {
+    this.feedService.toggleFeed(f.id);
+    await this.articleService.loadArticles(true, this.feedService.getSelectedIdsParam());
   }
 
   async selectPlaylist(id: string): Promise<void> {
@@ -97,14 +104,18 @@ export class SidebarComponent implements OnInit {
     this.addDisabled = false;
   }
 
-  async refreshFeed(f: Feed, btn: HTMLButtonElement): Promise<void> {
-    btn.textContent = '⏳';
+  async refreshFeed(f: Feed): Promise<void> {
+    if (this.refreshingFeedIds().has(f.id)) return;
+    this.refreshingFeedIds.update(s => { s.add(f.id); return new Set(s); });
     try {
       const res = await this.feedService.refreshFeed(f.id);
       this.toastService.show(res.articleCount ? `Pulled ${res.articleCount} new articles` : 'No new articles');
+      this.articleService.invalidateCache(f.id);
       await this.articleService.loadArticles(true, this.feedService.getSelectedIdsParam());
     } catch (err: any) { this.toastService.show(err.message, 'error'); }
-    btn.textContent = '↻';
+    finally {
+      this.refreshingFeedIds.update(s => { s.delete(f.id); return new Set(s); });
+    }
   }
 
   openFeedSettings(f: Feed): void {
@@ -177,11 +188,22 @@ export class SidebarComponent implements OnInit {
   }
 
   async refreshPlaylist(id: string): Promise<void> {
+    if (this.refreshingPlaylistIds().has(id)) return;
+    this.refreshingPlaylistIds.update(s => { s.add(id); return new Set(s); });
     try {
       const res = await this.playlistService.refresh(id);
-      this.toastService.show(res.articleCount ? `Pulled ${res.articleCount} new articles` : 'No new articles');
-      await this.articleService.loadArticles(true, this.feedService.getSelectedIdsParam());
+      let msg = res.articleCount ? `Pulled ${res.articleCount} new articles` : 'No new articles';
+      if (res?.failed?.length) msg += ` — ${res.failed.length} feeds failed`;
+      this.toastService.show(msg, res?.failed?.length ? 'error' : 'success');
+      // Invalidate cache and reload with the playlist's feed IDs
+      this.articleService.invalidateCache();
+      const feeds = await firstValueFrom(this.http.get<Feed[]>(`/playlists/${id}/feeds`));
+      const ids = feeds.map(f => f.id).join(',') || null;
+      await this.articleService.loadArticles(true, ids);
     } catch (err: any) { this.toastService.show(err.message, 'error'); }
+    finally {
+      this.refreshingPlaylistIds.update(s => { s.delete(id); return new Set(s); });
+    }
   }
 
   async deletePlaylist(id: string): Promise<void> {
@@ -196,7 +218,10 @@ export class SidebarComponent implements OnInit {
     this.refreshAllDisabled = true;
     try {
       const res = await this.feedService.refreshAll();
-      this.toastService.show(res?.articleCount ? `Pulled ${res.articleCount} new articles` : 'No new articles');
+      let msg = res?.articleCount ? `Pulled ${res.articleCount} new articles` : 'No new articles';
+      if (res?.failed?.length) msg += ` — ${res.failed.length} feeds failed`;
+      this.toastService.show(msg, res?.failed?.length ? 'error' : 'success');
+      this.articleService.invalidateCache();
       await this.articleService.loadArticles(true, this.feedService.getSelectedIdsParam());
     } catch (err: any) { this.toastService.show(err.message, 'error'); }
     this.refreshAllDisabled = false;
@@ -209,12 +234,14 @@ export class SidebarComponent implements OnInit {
   playlistStarred = signal<Map<string, boolean>>(new Map());
 
   async onStarFeed(f: Feed): Promise<void> {
-    const res = await this.feedService.starFeed(f.id);
-    if (res.starred && !f.emailNotifications) {
-      this.emailPopupId.set(f.id);
-      this.emailPopupMode.set('feed');
-      this.showEmailPopup.set(true);
-    }
+    try {
+      const res = await this.feedService.starFeed(f.id);
+      if (res.starred && !f.emailNotifications) {
+        this.emailPopupId.set(f.id);
+        this.emailPopupMode.set('feed');
+        this.showEmailPopup.set(true);
+      }
+    } catch (err: any) { this.toastService.show(err.message, 'error'); }
   }
 
   async onStarPlaylist(p: any): Promise<void> {

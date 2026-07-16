@@ -1,4 +1,4 @@
-import { Component, inject, effect } from '@angular/core';
+import { Component, inject, effect, OnDestroy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { HeaderComponent } from './components/header/header.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
@@ -20,7 +20,7 @@ import { Feed } from './models/feed';
   templateUrl: './app.html',
   styleUrls: ['./app.css']
 })
-export class App {
+export class App implements OnDestroy {
   readonly feedService = inject(FeedService);
   readonly articleService = inject(ArticleService);
   readonly authService = inject(AuthService);
@@ -31,6 +31,8 @@ export class App {
   modalVisible = false;
   modalMessage = '';
   private feedToDelete: Feed | null = null;
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
+  private isVisible = true;
 
   readonly HUES = [8, 24, 40, 160, 172, 190, 204, 340];
   stationColor(id: string): string {
@@ -44,11 +46,45 @@ export class App {
 
     effect(() => {
       if (this.authService.user() && !this.authService.loading()) {
+        this.articleService.loading.set(true);
         this.feedService.loadFeeds().then(() => {
           this.articleService.loadArticles(true, null);
         });
+        this.startAutoRefresh();
+      } else {
+        this.stopAutoRefresh();
       }
     });
+
+    document.addEventListener('visibilitychange', () => {
+      this.isVisible = document.visibilityState === 'visible';
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.stopAutoRefresh();
+  }
+
+  private startAutoRefresh(): void {
+    if (this.refreshTimer) return;
+    // First refresh at 5 min, then every 10 min
+    this.refreshTimer = setInterval(async () => {
+      if (!this.isVisible || !this.authService.user()) return;
+      try {
+        const res = await this.feedService.refreshAll();
+        if (res.articleCount > 0) {
+          this.articleService.invalidateCache();
+          await this.articleService.loadArticles(false, this.feedService.getSelectedIdsParam());
+        }
+      } catch { /* silent */ }
+    }, 10 * 60 * 1000);
+  }
+
+  private stopAutoRefresh(): void {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
+    }
   }
 
   onDeleteRequest(f: Feed): void {

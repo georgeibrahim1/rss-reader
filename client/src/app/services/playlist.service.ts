@@ -39,8 +39,8 @@ export class PlaylistService {
     await this.load();
   }
 
-  async refresh(id: string): Promise<{ articleCount: number }> {
-    return firstValueFrom(this.http.post<{ articleCount: number }>(`/playlists/${id}/refresh`, null));
+  async refresh(id: string): Promise<{ articleCount: number; failed?: { id: string; title: string; error: string }[] }> {
+    return firstValueFrom(this.http.post<{ articleCount: number; failed?: { id: string; title: string; error: string }[] }>(`/playlists/${id}/refresh`, null));
   }
 
   async addFeed(playlistId: string, feedId: string): Promise<void> {

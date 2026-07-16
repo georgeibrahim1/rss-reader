@@ -17,19 +17,19 @@ export class LoginComponent {
   email = '';
   password = '';
   error = signal('');
-  loading = false;
+  loading = signal(false);
 
   async submit(): Promise<void> {
     this.error.set('');
     if (!this.email.trim() || !this.password) { this.error.set('Email and password are required.'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email.trim())) { this.error.set('Please enter a valid email address.'); return; }
-    this.loading = true;
+    this.loading.set(true);
     try {
       await this.auth.login(this.email, this.password);
       await this.router.navigate(['/']);
     } catch (err: any) {
       this.error.set(extractErrorMessage(err));
     }
-    this.loading = false;
+    this.loading.set(false);
   }
 }
