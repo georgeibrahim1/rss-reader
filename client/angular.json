@@ -13,21 +13,13 @@
       "sourceRoot": "src",
       "prefix": "app",
       "i18n": {
-        "sourceLocale": "en",
-        "locales": {
-          "ar": "src/locale/messages.ar.xlf",
-          "fr": "src/locale/messages.fr.xlf",
-          "es": "src/locale/messages.es.xlf",
-          "de": "src/locale/messages.de.xlf"
-        }
+        "sourceLocale": "en"
       },
       "architect": {
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "polyfills": [
-              "@angular/localize/init"
-            ],
+            "polyfills": [],
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "outputPath": "../wwwroot",

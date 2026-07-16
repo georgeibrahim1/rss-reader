@@ -1,8 +1,10 @@
+using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using RssReader.Api.Database;
 using RssReader.Api.Endpoints;
@@ -49,6 +51,16 @@ builder.Services.AddSingleton<FeedService>();
 builder.Services.AddSingleton<DigestWorker>();
 builder.Services.AddHostedService<DigestWorker>(sp => sp.GetRequiredService<DigestWorker>());
 
+// ── Localization ───────────────────────────────────────────
+var supportedCultures = new[] { "en", "ar" };
+builder.Services.Configure<RequestLocalizationOptions>(opts =>
+{
+    opts.DefaultRequestCulture = new RequestCulture("en");
+    opts.SupportedCultures = supportedCultures.Select(c => new CultureInfo(c)).ToList();
+    opts.SupportedUICultures = supportedCultures.Select(c => new CultureInfo(c)).ToList();
+    opts.RequestCultureProviders.Insert(0, new QueryStringRequestCultureProvider { QueryStringKey = "lang" });
+});
+
 var app = builder.Build();
 
 Directory.CreateDirectory("data");
@@ -71,6 +83,7 @@ await DbSeeder.SeedAsync(app.Services);
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.UseRequestLocalization();
 app.UseForwardedHeaders();
 app.UseAuthentication();
 app.UseAuthorization();
