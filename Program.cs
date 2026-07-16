@@ -50,6 +50,7 @@ builder.Services.AddSingleton(sp => new HttpClient());
 builder.Services.AddSingleton<FeedService>();
 builder.Services.AddSingleton<DigestWorker>();
 builder.Services.AddHostedService<DigestWorker>(sp => sp.GetRequiredService<DigestWorker>());
+builder.Services.AddHostedService<GuestCleanupWorker>();
 
 // ── Localization ───────────────────────────────────────────
 var supportedCultures = new[] { "en", "ar" };

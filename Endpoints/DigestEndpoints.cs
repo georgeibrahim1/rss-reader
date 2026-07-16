@@ -15,6 +15,7 @@ public static class DigestEndpoints
     {
         app.MapPatch("/auth/me", async (UpdateUserRequest req, AppDbContext db, UserManager<User> userManager, ClaimsPrincipal user) =>
         {
+            if (user.IsGuest()) return Results.Json(new { error = "GUEST_NO_EMAIL" }, statusCode: 403);
             var email = user.GetUserEmail();
             var u = await userManager.FindByEmailAsync(email);
             if (u == null) return Results.NotFound();
@@ -25,6 +26,7 @@ public static class DigestEndpoints
 
         app.MapPost("/auth/test-email", async (AppDbContext db, DigestWorker worker, UserManager<User> userManager, IConfiguration config, ClaimsPrincipal user) =>
         {
+            if (user.IsGuest()) return Results.Json(new { error = "GUEST_NO_EMAIL" }, statusCode: 403);
             var apiKey = config["SendGrid:ApiKey"] ?? Environment.GetEnvironmentVariable("SENDGRID_API_KEY") ?? "";
             if (string.IsNullOrWhiteSpace(apiKey))
                 return Results.BadRequest(new { error = "SendGrid API key not configured." });

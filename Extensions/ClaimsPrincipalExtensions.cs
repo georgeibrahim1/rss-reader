@@ -11,4 +11,7 @@ public static class ClaimsPrincipalExtensions
     public static string GetUserEmail(this ClaimsPrincipal user) =>
         user.FindFirstValue(ClaimTypes.Email)
             ?? throw new UnauthorizedAccessException();
+
+    public static bool IsGuest(this ClaimsPrincipal user) =>
+        user.FindFirstValue("IsGuest") == "true";
 }

@@ -21,6 +21,14 @@ public static class FeedEndpoints
         app.MapPost("/feeds", async (string url, AppDbContext db, FeedService feedService, ClaimsPrincipal user) =>
         {
             var userId = user.GetUserId();
+
+            if (user.IsGuest())
+            {
+                var feedCount = await db.Feeds.CountAsync(f => f.UserId == userId);
+                if (feedCount >= 3)
+                    return Results.Conflict(new { error = "GUEST_FEED_LIMIT", message = "Guest accounts are limited to 3 feeds. Create a free account to add more." });
+            }
+
             try
             {
                 var feed = await feedService.AddFeedAsync(url);

@@ -14,6 +14,7 @@ public static class PlaylistEndpoints
         app.MapPost("/playlists", async (string name, AppDbContext db, ClaimsPrincipal user) =>
         {
             var userId = user.GetUserId();
+            if (user.IsGuest()) return Results.Json(new { error = "GUEST_NO_PLAYLISTS" }, statusCode: 403);
             var playlist = new Playlist { Name = name, UserId = userId };
             db.Playlists.Add(playlist);
             await db.SaveChangesAsync();
@@ -23,6 +24,7 @@ public static class PlaylistEndpoints
         app.MapGet("/playlists", async (AppDbContext db, ClaimsPrincipal user) =>
         {
             var userId = user.GetUserId();
+            if (user.IsGuest()) return Results.Json(new { error = "GUEST_NO_PLAYLISTS" }, statusCode: 403);
             var playlists = await db.Playlists
                 .Where(p => p.UserId == userId)
                 .Select(p => new { p.Id, p.Name, Emoji = p.Emoji, FeedCount = p.FeedPlaylists.Count })
@@ -33,6 +35,7 @@ public static class PlaylistEndpoints
         app.MapPut("/playlists/{id}", async (string id, string name, string? emoji, AppDbContext db, ClaimsPrincipal user) =>
         {
             var userId = user.GetUserId();
+            if (user.IsGuest()) return Results.Json(new { error = "GUEST_NO_PLAYLISTS" }, statusCode: 403);
             var playlist = await db.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
             if (playlist == null) return Results.NotFound();
             playlist.Name = name;
@@ -44,6 +47,7 @@ public static class PlaylistEndpoints
         app.MapGet("/playlists/{id}/feeds", async (string id, AppDbContext db, ClaimsPrincipal user) =>
         {
             var userId = user.GetUserId();
+            if (user.IsGuest()) return Results.Json(new { error = "GUEST_NO_PLAYLISTS" }, statusCode: 403);
             var playlist = await db.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
             if (playlist == null) return Results.NotFound();
             var feeds = await db.FeedPlaylists.Where(fp => fp.PlaylistId == id)
@@ -54,6 +58,7 @@ public static class PlaylistEndpoints
         app.MapDelete("/playlists/{id}", async (string id, AppDbContext db, ClaimsPrincipal user) =>
         {
             var userId = user.GetUserId();
+            if (user.IsGuest()) return Results.Json(new { error = "GUEST_NO_PLAYLISTS" }, statusCode: 403);
             var playlist = await db.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
             if (playlist == null) return Results.NotFound();
             db.Playlists.Remove(playlist);
@@ -64,6 +69,7 @@ public static class PlaylistEndpoints
         app.MapPost("/playlists/{id}/feeds", async (string id, string feedId, AppDbContext db, ClaimsPrincipal user) =>
         {
             var userId = user.GetUserId();
+            if (user.IsGuest()) return Results.Json(new { error = "GUEST_NO_PLAYLISTS" }, statusCode: 403);
             var playlist = await db.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
             if (playlist == null) return Results.NotFound();
             var feed = await db.Feeds.FirstOrDefaultAsync(f => f.Id == feedId && f.UserId == userId);
@@ -78,6 +84,7 @@ public static class PlaylistEndpoints
         app.MapDelete("/playlists/{id}/feeds/{feedId}", async (string id, string feedId, AppDbContext db, ClaimsPrincipal user) =>
         {
             var userId = user.GetUserId();
+            if (user.IsGuest()) return Results.Json(new { error = "GUEST_NO_PLAYLISTS" }, statusCode: 403);
             var playlist = await db.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
             if (playlist == null) return Results.NotFound();
             var link = await db.FeedPlaylists.FirstOrDefaultAsync(fp => fp.PlaylistId == id && fp.FeedId == feedId);
@@ -90,6 +97,7 @@ public static class PlaylistEndpoints
         app.MapPost("/playlists/{id}/refresh", async (string id, AppDbContext db, FeedService feedService, ClaimsPrincipal user) =>
         {
             var userId = user.GetUserId();
+            if (user.IsGuest()) return Results.Json(new { error = "GUEST_NO_PLAYLISTS" }, statusCode: 403);
             var playlist = await db.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
             if (playlist == null) return Results.NotFound();
             var feedIds = await db.FeedPlaylists.Where(fp => fp.PlaylistId == id).Select(fp => fp.FeedId).ToListAsync();
@@ -126,6 +134,7 @@ public static class PlaylistEndpoints
         app.MapPost("/playlists/{id}/star", async (string id, AppDbContext db, ClaimsPrincipal user) =>
         {
             var userId = user.GetUserId();
+            if (user.IsGuest()) return Results.Json(new { error = "GUEST_NO_PLAYLISTS" }, statusCode: 403);
             var playlist = await db.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
             if (playlist == null) return Results.NotFound();
             var feedIds = await db.FeedPlaylists.Where(fp => fp.PlaylistId == id).Select(fp => fp.FeedId).ToListAsync();
@@ -139,6 +148,7 @@ public static class PlaylistEndpoints
         app.MapPost("/playlists/{id}/email-notifications", async (string id, AppDbContext db, ClaimsPrincipal user) =>
         {
             var userId = user.GetUserId();
+            if (user.IsGuest()) return Results.Json(new { error = "GUEST_NO_PLAYLISTS" }, statusCode: 403);
             var playlist = await db.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
             if (playlist == null) return Results.NotFound();
             var feedIds = await db.FeedPlaylists.Where(fp => fp.PlaylistId == id).Select(fp => fp.FeedId).ToListAsync();
