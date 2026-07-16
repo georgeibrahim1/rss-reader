@@ -133,9 +133,9 @@ public class DigestWorker : BackgroundService
 
     private string EnvVal(string configKey, string envKey, string fallback = "")
     {
-        var val = _config[configKey];
+        var val = Environment.GetEnvironmentVariable(envKey);
         if (!string.IsNullOrWhiteSpace(val)) return val;
-        val = Environment.GetEnvironmentVariable(envKey);
+        val = _config[configKey];
         if (!string.IsNullOrWhiteSpace(val)) return val;
         return fallback;
     }

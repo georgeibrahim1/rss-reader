@@ -46,7 +46,12 @@ builder.Services.Configure<ForwardedHeadersOptions>(opts =>
 {
     opts.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
-builder.Services.AddSingleton(sp => new HttpClient());
+builder.Services.AddSingleton(sp =>
+{
+    var client = new HttpClient();
+    client.DefaultRequestHeaders.Add("User-Agent", "RssReader/1.0");
+    return client;
+});
 builder.Services.AddSingleton<FeedService>();
 builder.Services.AddSingleton<DigestWorker>();
 builder.Services.AddHostedService<DigestWorker>(sp => sp.GetRequiredService<DigestWorker>());
