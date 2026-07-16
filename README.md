@@ -21,7 +21,7 @@ A lightweight, self-hosted RSS/Atom feed reader built with ASP.NET Core Minimal 
 | **Backend** | ASP.NET Core 10 Minimal API |
 | **Feed parsing** | [CodeHollow.FeedReader](https://github.com/arminreiter/FeedReader) (RSS 0.91–2.0, Atom) |
 | **XSS prevention** | [HtmlSanitizer](https://github.com/mganss/HtmlSanitizer) |
-| **Storage** | Single JSON file (`data/subscriptions.json`) |
+| **Storage** | SQLite (`data/rssreader.db`) |
 | **Frontend** | Vanilla HTML/CSS/JS, no frameworks |
 | **Fonts** | Fraunces, Inter, JetBrains Mono (Google Fonts) |
 | **Hosting** | [Railway](https://railway.app) |
@@ -57,14 +57,22 @@ A lightweight, self-hosted RSS/Atom feed reader built with ASP.NET Core Minimal 
 ├── Models/
 │   ├── Article.cs            # Article model
 │   ├── Feed.cs               # Feed model
-│   └── SubscriptionStore.cs  # Root JSON model (Feeds + Articles)
+│   ├── Playlist.cs           # Playlist model
+│   ├── FeedPlaylist.cs       # Join table (many-to-many)
+│   └── User.cs               # Extends IdentityUser
+├── Database/
+│   ├── AppDbContext.cs       # EF Core DbContext + configuration
+│   ├── DbSeeder.cs           # Seeds demo users, feeds, and playlists
+│   └── Migrations/           # Auto-generated EF Core migrations
 ├── Services/
 │   ├── FeedService.cs        # Feed validation, parsing, sanitization
-│   └── StorageService.cs     # JSON file read/write, query logic
+│   └── DigestWorker.cs       # Background email digest worker
 ├── data/
-│   └── subscriptions.json    # Persistent data file
+│   └── rssreader.db          # SQLite database file
+├── client/
+│   └── src/app/              # Angular SPA frontend
 ├── wwwroot/
-    └── index.html            # Frontend (single-file SPA)
+    └── browser/              # Built Angular output
 ```
 
 ## Getting Started

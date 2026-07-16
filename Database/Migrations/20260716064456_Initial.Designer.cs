@@ -4,15 +4,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using RssReader.Api.Data;
+using RssReader.Api.Database;
 
 #nullable disable
 
-namespace RssReader.Api.Data.Migrations
+namespace RssReader.Api.Database.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260714084238_AddColorAndEmoji")]
-    partial class AddColorAndEmoji
+    [Migration("20260716064456_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -196,6 +196,9 @@ namespace RssReader.Api.Data.Migrations
                     b.Property<string>("Color")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("EmailNotifications")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("Starred")
                         .HasColumnType("INTEGER");
 
@@ -269,12 +272,18 @@ namespace RssReader.Api.Data.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("DigestFrequencyHours")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LastDigestSent")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("INTEGER");

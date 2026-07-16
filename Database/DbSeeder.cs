@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RssReader.Api.Models;
 
-namespace RssReader.Api.Data;
+namespace RssReader.Api.Database;
 
 public static class DbSeeder
 {

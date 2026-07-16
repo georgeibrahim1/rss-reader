@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using RssReader.Api.Data;
+using RssReader.Api.Database;
 using RssReader.Api.Models;
 
 namespace RssReader.Api.Services;

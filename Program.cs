@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
-using RssReader.Api.Data;
+using RssReader.Api.Database;
 using RssReader.Api.Models;
 using RssReader.Api.Services;
 
@@ -202,6 +202,7 @@ app.MapPost("/feeds/refresh-all", async (AppDbContext db, FeedService feedServic
     var userId = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
     var feeds = await db.Feeds.Where(f => f.UserId == userId).ToListAsync();
     var total = 0;
+    var failed = new List<object>();
     foreach (var f in feeds)
     {
         try
@@ -214,10 +215,10 @@ app.MapPost("/feeds/refresh-all", async (AppDbContext db, FeedService feedServic
                 if (!exists) { db.Articles.Add(article); total++; }
             }
         }
-        catch { }
+        catch (Exception ex) { failed.Add(new { f.Id, f.Title, error = ex.Message }); }
     }
     await db.SaveChangesAsync();
-    return Results.Ok(new { message = $"Refreshed {feeds.Count} feeds", articleCount = total });
+    return Results.Ok(new { message = $"Refreshed {feeds.Count} feeds", articleCount = total, failed });
 }).RequireAuthorization();
 
 // --------------- Playlists ---------------
@@ -331,6 +332,7 @@ app.MapPost("/playlists/{id}/refresh", async (string id, AppDbContext db, FeedSe
     if (playlist == null) return Results.NotFound();
     var feedIds = await db.FeedPlaylists.Where(fp => fp.PlaylistId == id).Select(fp => fp.FeedId).ToListAsync();
     var total = 0;
+    var failed = new List<object>();
     foreach (var fid in feedIds)
     {
         var f = await db.Feeds.FindAsync(fid);
@@ -345,10 +347,10 @@ app.MapPost("/playlists/{id}/refresh", async (string id, AppDbContext db, FeedSe
                 { db.Articles.Add(a); total++; }
             }
         }
-        catch { }
+        catch (Exception ex) { failed.Add(new { f!.Id, f.Title, error = ex.Message }); }
     }
     await db.SaveChangesAsync();
-    return Results.Ok(new { articleCount = total });
+    return Results.Ok(new { articleCount = total, failed });
 }).RequireAuthorization();
 
 // --------------- Articles (with starred filter) ---------------

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace RssReader.Api.Data.Migrations
+namespace RssReader.Api.Database.Migrations
 {
     /// <inheritdoc />
     public partial class Initial : Migration
@@ -30,6 +30,8 @@ namespace RssReader.Api.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "TEXT", nullable: false),
+                    DigestFrequencyHours = table.Column<int>(type: "INTEGER", nullable: false),
+                    LastDigestSent = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
@@ -165,7 +167,9 @@ namespace RssReader.Api.Data.Migrations
                     Url = table.Column<string>(type: "TEXT", nullable: false),
                     AddedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UserId = table.Column<string>(type: "TEXT", nullable: false),
-                    Starred = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Starred = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Color = table.Column<string>(type: "TEXT", nullable: true),
+                    EmailNotifications = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -184,7 +188,8 @@ namespace RssReader.Api.Data.Migrations
                 {
                     Id = table.Column<string>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
-                    UserId = table.Column<string>(type: "TEXT", nullable: false)
+                    UserId = table.Column<string>(type: "TEXT", nullable: false),
+                    Emoji = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
