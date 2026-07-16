@@ -12,12 +12,12 @@ interface SuggestedFeed {
 }
 
 const SUGGESTIONS: SuggestedFeed[] = [
-  { title: 'Hacker News', url: 'https://hnrss.org/frontpage', emoji: '💻', description: 'Tech news & startup discussion' },
-  { title: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml', emoji: '🌍', description: 'International news from BBC' },
+  { title: 'TechCrunch', url: 'https://techcrunch.com/feed/', emoji: '💻', description: 'Startup & tech business news' },
+  { title: 'NPR World', url: 'https://feeds.npr.org/1004/rss.xml', emoji: '🌍', description: 'International news from NPR' },
   { title: 'The Verge', url: 'https://www.theverge.com/rss/index.xml', emoji: '📱', description: 'Technology & gadget reviews' },
   { title: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/index', emoji: '🔬', description: 'In-depth tech & science reporting' },
   { title: 'CSS-Tricks', url: 'https://css-tricks.com/feed/', emoji: '🎨', description: 'Web design & front-end tips' },
-  { title: 'Smashing Mag', url: 'https://www.smashingmagazine.com/feed/', emoji: '⚡', description: 'UX, design & web development' },
+  { title: 'Wired', url: 'https://www.wired.com/feed/rss', emoji: '⚡', description: 'Technology, science & culture' },
 ];
 
 @Component({

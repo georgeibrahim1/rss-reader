@@ -165,13 +165,12 @@ export class HomeComponent implements OnDestroy {
   }
 
   get resultsSummaryText(): string | null {
-    if (this.articleService.loading()) return null;
+    if (this.articleService.loading() || this.feedService.feeds().length === 0) return null;
+    const total = this.articleService.totalCount();
     const q = this.articleService.searchQuery();
     const df = this.articleService.dateFrom();
     const dt = this.articleService.dateTo();
     const st = this.articleService.starredOnly();
-
-    if (!q && !df && !dt && !st) return null;
 
     const ls = this.localeService;
     const parts: string[] = [];
@@ -184,7 +183,9 @@ export class HomeComponent implements OnDestroy {
     else if (dt) range = ls.t('summary.until', { to: dt });
     if (range) parts.push(range);
 
-    return ls.t('summary.found', { count: this.articleService.totalCount(), filters: parts.join(' · ') });
+    if (parts.length > 0)
+      return ls.t('summary.filtered', { count: total, filters: parts.join(' · ') });
+    return ls.t('summary.total', { count: total });
   }
 
   private escapeHtml(s: string): string {

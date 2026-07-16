@@ -14,9 +14,9 @@
 
   <main id="main">
     @if (resultsSummaryText) {
-      <div class="results-summary" style="display:block">{{ resultsSummaryText }}</div>
+      <div class="results-summary">{{ resultsSummaryText }}</div>
     }
-    @if (articleService.loading() && articleService.articles().length === 0) {
+    @if (articleService.loading() && articleService.articles().length === 0 && feedService.feeds().length > 0) {
       <div style="display:flex;flex-direction:column;gap:16px;max-width:720px;margin:0 auto">
         @for (i of [1,2,3]; track i) {
           <div class="skeleton-card">
@@ -40,7 +40,7 @@
         <div class="empty-state" [innerHTML]="emptyStateHtml"></div>
       }
     }
-    @if (articleService.refreshing()) {
+    @if (articleService.refreshing() && feedService.feeds().length > 0) {
       <div class="refresh-bar"></div>
     }
     <div class="article-list">

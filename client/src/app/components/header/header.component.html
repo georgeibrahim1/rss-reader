@@ -5,30 +5,29 @@
     <h1>RSS Reader</h1>
   </div>
   <div class="search-box">
-    <input type="text" [(ngModel)]="searchQuery" (input)="onSearchInput()" [placeholder]="localeService.t('search.placeholder')" autocomplete="off">
+    <input type="text" [(ngModel)]="searchQuery" (input)="onSearchInput()"
+           [placeholder]="localeService.t('search.placeholder')" autocomplete="off">
+    @if (!authService.isGuest()) {
+      <div class="filter-wrap">
+        <button class="icon-btn" (click)="toggleFilter()" title="Date filter">📅</button>
+        <div class="filter-dropdown" [class.show]="filterOpen">
+          <label>{{ localeService.t('date.from') }} <input type="date" [(ngModel)]="dateFrom"></label>
+          <label>{{ localeService.t('date.to') }} <input type="date" [(ngModel)]="dateTo"></label>
+          <div class="row">
+            <button class="apply" (click)="applyFilter()">{{ localeService.t('button.apply') }}</button>
+            <button class="clear" (click)="clearFilter()">{{ localeService.t('button.clear') }}</button>
+          </div>
+        </div>
+      </div>
+      <button class="icon-btn" [class.active]="articleService.starredOnly()"
+              (click)="toggleStarred()" title="Show starred only">⭐</button>
+    }
   </div>
   <button class="icon-btn lang-toggle" (click)="localeService.toggleLocale()"
           [title]="localeService.isRtl() ? 'English' : 'العربية'">
     {{ localeService.isRtl() ? '🇬🇧' : '🇸🇦' }}
   </button>
   <button class="icon-btn" (click)="themeService.toggle()" title="Toggle dark/light mode">{{ themeService.icon() }}</button>
-
-  <!-- Starred + filter (users only) -->
-  @if (!authService.isGuest()) {
-    <button class="icon-btn" [class.active]="articleService.starredOnly()"
-            (click)="toggleStarred()" title="Show starred only">⭐</button>
-    <div class="filter-wrap">
-      <button class="icon-btn" (click)="toggleFilter()" title="Date filter">📅</button>
-      <div class="filter-dropdown" [class.show]="filterOpen">
-        <label>{{ localeService.t('date.from') }} <input type="date" [(ngModel)]="dateFrom"></label>
-        <label>{{ localeService.t('date.to') }} <input type="date" [(ngModel)]="dateTo"></label>
-        <div class="row">
-          <button class="apply" (click)="applyFilter()">{{ localeService.t('button.apply') }}</button>
-          <button class="clear" (click)="clearFilter()">{{ localeService.t('button.clear') }}</button>
-        </div>
-      </div>
-    </div>
-  }
 
   <!-- Auth: sign-in for guests, settings for users -->
   @if (authService.isGuest()) {

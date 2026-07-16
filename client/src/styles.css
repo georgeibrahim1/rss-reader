@@ -99,16 +99,17 @@ header {
   display: flex; align-items: center; justify-content: center;
   font-size: 1.05rem;
   transition: background 0.15s, transform 0.15s;
+  flex-shrink: 0;
 }
 .icon-btn:hover { background: rgba(255,255,255,0.18); transform: translateY(-1px); }
 .icon-btn:active { transform: translateY(0); }
 .menu-toggle { display: flex; }
 
 .search-box {
-  display: flex; align-items: center; flex: 1; max-width: 300px;
+  display: flex; align-items: center; flex: 1; max-width: 440px; gap: 6px;
 }
 .search-box input {
-  width: 100%; padding: 7px 12px;
+  flex: 1; min-width: 0; padding: 7px 12px;
   background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18);
   border-radius: 10px; color: var(--cream); font-size: 0.84rem;
   font-family: var(--font-body); outline: none;
@@ -151,7 +152,7 @@ header {
   max-width: 720px; margin: 0 auto 14px;
   padding: 10px 20px; border-radius: 10px;
   font-size: 0.84rem; color: var(--teal);
-  background: var(--teal-tint); display: none;
+  background: var(--teal-tint);
   font-family: var(--font-mono); text-align: center;
 }
 @media (min-width: 900px) { .menu-toggle { display: none; } }
