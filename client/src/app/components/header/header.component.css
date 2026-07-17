@@ -1,11 +1,18 @@
 /* ---- header more dropdown ---- */
-.header-more-wrap { position: relative; }
+.header-more-wrap { display: none; position: relative; }
 .header-more-drop {
+  display: none;
   position: absolute; top: 46px; right: 0;
-  display: flex; gap: 8px;
+  gap: 8px;
   background: var(--ink); border: 1px solid rgba(255,255,255,0.14);
   border-radius: 12px; padding: 8px 10px;
   z-index: 30; box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+.header-more-drop.show { display: flex; }
+
+@media (max-width: 600px) {
+  .header-standalone { display: none; }
+  .header-more-wrap { display: block; }
 }
 
 /* ---- sign-in button ---- */

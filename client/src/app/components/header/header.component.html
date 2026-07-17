@@ -23,17 +23,33 @@
               (click)="toggleStarred()" title="Show starred only">⭐</button>
     }
   </div>
-  <button class="icon-btn lang-toggle" (click)="localeService.toggleLocale()"
+  <button class="icon-btn lang-toggle header-standalone" (click)="localeService.toggleLocale()"
           [title]="localeService.isRtl() ? 'English' : 'العربية'">
     {{ localeService.isRtl() ? '🇬🇧' : '🇸🇦' }}
   </button>
-  <button class="icon-btn" (click)="themeService.toggle()" title="Toggle dark/light mode">{{ themeService.icon() }}</button>
+  <button class="icon-btn header-standalone" (click)="themeService.toggle()" title="Toggle dark/light mode">{{ themeService.icon() }}</button>
+  @if (!authService.isGuest()) {
+    <button class="icon-btn header-standalone" (click)="openSettings()" title="Settings">⚙️</button>
+  }
 
-  <!-- Auth: sign-in for guests, settings for users -->
+  <!-- More dropdown (mobile) -->
+  <div class="header-more-wrap">
+    <button class="icon-btn more-btn" (click)="toggleMore()" title="More">⋮</button>
+    <div class="header-more-drop" [class.show]="moreOpen">
+      <button class="icon-btn lang-toggle" (click)="localeService.toggleLocale(); moreOpen = false"
+              [title]="localeService.isRtl() ? 'English' : 'العربية'">
+        {{ localeService.isRtl() ? '🇬🇧' : '🇸🇦' }}
+      </button>
+      <button class="icon-btn" (click)="themeService.toggle(); moreOpen = false" title="Toggle dark/light mode">{{ themeService.icon() }}</button>
+      @if (!authService.isGuest()) {
+        <button class="icon-btn" (click)="openSettings(); moreOpen = false" title="Settings">⚙️</button>
+      }
+    </div>
+  </div>
+
+  <!-- Auth: sign-in for guests (always visible, never in dropdown) -->
   @if (authService.isGuest()) {
     <button class="header-signin-btn" (click)="goToSignIn()">{{ localeService.t('button.signIn') }}</button>
-  } @else {
-    <button class="icon-btn" (click)="openSettings()" title="Settings">⚙️</button>
   }
 </header>
 

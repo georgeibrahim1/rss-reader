@@ -33,6 +33,7 @@ export class HeaderComponent {
 
   logoutConfirm = signal(false);
   settingsOpen = signal(false);
+  moreOpen = false;
   digestFrequency = 24;
   emailFeeds = signal<Feed[]>([]);
 
@@ -111,9 +112,12 @@ export class HeaderComponent {
     await this.router.navigate(['/login']);
   }
 
+  toggleMore(): void { this.moreOpen = !this.moreOpen; }
+
   @HostListener('document:click', ['$event'])
   onDocClick(e: MouseEvent): void {
     const t = e.target as HTMLElement;
     if (!t.closest('.filter-wrap')) this.filterOpen = false;
+    if (!t.closest('.header-more-wrap')) this.moreOpen = false;
   }
 }
