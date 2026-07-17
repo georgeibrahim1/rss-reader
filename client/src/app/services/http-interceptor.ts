@@ -3,6 +3,18 @@ import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 
+function friendlyError(err: any, fallback = 'Something went wrong. Please try again.'): string {
+  if (!err) return fallback;
+  if (typeof err === 'string') return err.slice(0, 200);
+  const apiMsg = err?.error?.error || err?.error?.message || err?.error?.title;
+  if (typeof apiMsg === 'string' && apiMsg.length > 0) return apiMsg.slice(0, 200);
+  if (err?.message && typeof err.message === 'string') {
+    const cleaned = err.message.replace(/^Http failure (?:response for|during) .+?: \d+ .*$/, '');
+    if (cleaned.trim()) return cleaned.trim().slice(0, 200);
+  }
+  return fallback;
+}
+
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
 
@@ -24,8 +36,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           msg = 'You do not have permission to do that.';
         } else if (err.status >= 500) {
           msg = 'Server error. Please try again later.';
-        } else if (err.error?.error) {
-          msg = err.error.error;
+        } else {
+          msg = friendlyError(err, msg);
         }
 
         document.dispatchEvent(new CustomEvent('app-toast', { detail: { message: msg, type: 'error' } }));

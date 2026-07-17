@@ -102,7 +102,7 @@ export class HomeComponent implements OnDestroy {
       this.toastService.show(this.localeService.t('toast.feedRemoved'));
       await this.feedService.loadFeeds();
       await this.articleService.loadArticles(true, this.feedService.getSelectedIdsParam());
-    } catch (err: any) { this.toastService.show(err.message, 'error'); }
+    } catch (err: any) { this.toastService.error(err); }
     this.feedToDelete = null;
   }
 

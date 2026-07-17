@@ -63,7 +63,7 @@ export class SuggestedFeedsComponent {
       await this.articleService.loadArticles(true, this.feedService.getSelectedIdsParam());
       this.suggestions.update(arr => arr.filter(s => s.url !== url));
     } catch (err: any) {
-      this.toastService.show(err.message || err.error?.error, 'error');
+      this.toastService.error(err);
     }
     this.addingUrl.set(null);
   }

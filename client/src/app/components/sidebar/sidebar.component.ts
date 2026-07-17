@@ -138,7 +138,7 @@ export class SidebarComponent implements OnInit {
         this.guestModalType.set('feed');
         this.guestLimitModal.set(true);
       } else {
-        this.toastService.show(err.message || err.error?.error, 'error');
+        this.toastService.error(err);
       }
     }
     this.addDisabled = false;
@@ -161,7 +161,7 @@ export class SidebarComponent implements OnInit {
       this.toastService.show(res.articleCount ? this.localeService.t('toast.pulledArticles', { count: res.articleCount }) : this.localeService.t('toast.noNewArticles'));
       this.articleService.invalidateCache(f.id);
       await this.articleService.loadArticles(true, this.feedService.getSelectedIdsParam());
-    } catch (err: any) { this.toastService.show(err.message, 'error'); }
+    } catch (err: any) { this.toastService.error(err); }
     finally {
       this.refreshingFeedIds.update(s => { s.delete(f.id); return new Set(s); });
     }
@@ -180,7 +180,7 @@ export class SidebarComponent implements OnInit {
     try {
       await this.feedService.updateFeed(this.settingsId(), this.editTitle().trim(), this.editUrl().trim(), this.editColor());
       this.settingsOpen.set(false);
-    } catch (err: any) { this.toastService.show(err.message, 'error'); }
+    } catch (err: any) { this.toastService.error(err); }
   }
 
   // --- Playlists ---
@@ -190,7 +190,7 @@ export class SidebarComponent implements OnInit {
     try {
       await this.playlistService.create(name);
       this.newPlaylistName = '';
-    } catch (err: any) { this.toastService.show(err.message, 'error'); }
+    } catch (err: any) { this.toastService.error(err); }
   }
 
   openPlaylistSettings(p: any): void {
@@ -219,21 +219,21 @@ export class SidebarComponent implements OnInit {
     try {
       await this.playlistService.rename(this.settingsId(), this.editTitle().trim(), this.editEmoji());
       this.settingsOpen.set(false);
-    } catch (err: any) { this.toastService.show(err.message, 'error'); }
+    } catch (err: any) { this.toastService.error(err); }
   }
 
   async addFeedToPlaylist(feedId: string): Promise<void> {
     try {
       await this.playlistService.addFeed(this.settingsId(), feedId);
       await this.loadPlaylistDetail(this.settingsId());
-    } catch (err: any) { this.toastService.show(err.message, 'error'); }
+    } catch (err: any) { this.toastService.error(err); }
   }
 
   async removeFeedFromPlaylist(feedId: string): Promise<void> {
     try {
       await this.playlistService.removeFeed(this.settingsId(), feedId);
       await this.loadPlaylistDetail(this.settingsId());
-    } catch (err: any) { this.toastService.show(err.message, 'error'); }
+    } catch (err: any) { this.toastService.error(err); }
   }
 
   async refreshPlaylist(id: string): Promise<void> {
@@ -249,7 +249,7 @@ export class SidebarComponent implements OnInit {
       const feeds = await firstValueFrom(this.http.get<Feed[]>(`/playlists/${id}/feeds`));
       const ids = feeds.map(f => f.id).join(',') || null;
       await this.articleService.loadArticles(true, ids);
-    } catch (err: any) { this.toastService.show(err.message, 'error'); }
+    } catch (err: any) { this.toastService.error(err); }
     finally {
       this.refreshingPlaylistIds.update(s => { s.delete(id); return new Set(s); });
     }
@@ -259,7 +259,7 @@ export class SidebarComponent implements OnInit {
     try {
       await this.playlistService.remove(id);
       this.settingsOpen.set(false);
-    } catch (err: any) { this.toastService.show(err.message, 'error'); }
+    } catch (err: any) { this.toastService.error(err); }
   }
 
   // --- Refresh All ---
@@ -272,7 +272,7 @@ export class SidebarComponent implements OnInit {
       this.toastService.show(msg, res?.failed?.length ? 'error' : 'success');
       this.articleService.invalidateCache();
       await this.articleService.loadArticles(true, this.feedService.getSelectedIdsParam());
-    } catch (err: any) { this.toastService.show(err.message, 'error'); }
+    } catch (err: any) { this.toastService.error(err); }
     this.refreshAllDisabled = false;
   }
 
@@ -295,7 +295,7 @@ export class SidebarComponent implements OnInit {
         this.emailPopupMode.set('feed');
         this.showEmailPopup.set(true);
       }
-    } catch (err: any) { this.toastService.show(err.message, 'error'); }
+    } catch (err: any) { this.toastService.error(err); }
   }
 
   async onStarPlaylist(p: any): Promise<void> {
